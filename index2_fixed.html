@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dh Foods | Brand Health & Market Intelligence Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --dh-dark:#003e2d;
+  --dh-dark2:#002e20;
+  --dh-green:#4CA384;
+  --dh-green-soft:#8BC4A8;
+  --dh-green-pale:#B8D9C9;
+  --dh-green-faint:#D4EDE3;
+  --dh-tan:#ed7401;
+  --dh-cream:#fefce8;
+  --dh-bg:#f4f4ee;
+  --card-radius:10px;
+  --shadow:0 1px 3px rgba(0,62,45,0.08), 0 1px 2px rgba(0,62,45,0.06);
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; font-family:'Segoe UI',-apple-system,sans-serif;
+  background:var(--dh-bg); color:#1c2b24; font-size:13px;
+}
+.app{display:flex; min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{
+  width:64px; background:var(--dh-dark); display:flex; flex-direction:column;
+  align-items:center; padding:16px 0; gap:8px; flex-shrink:0; position:sticky; top:0; height:100vh;
+}
+.sidebar .logo{
+  background:var(--dh-green); border-radius:8px; width:38px; height:38px;
+  display:flex; align-items:center; justify-content:center; margin-bottom:20px;
+  font-weight:800; color:var(--dh-dark); font-size:14px;
+}
+.sidebar .navitem{
+  width:44px; height:44px; border-radius:8px; display:flex; align-items:center;
+  justify-content:center; color:rgba(255,255,255,0.45); cursor:pointer;
+  transition:all .15s ease; font-size:18px;
+}
+.sidebar .navitem:hover{background:rgba(76,163,132,0.15); color:var(--dh-green);}
+.sidebar .navitem.active{background:rgba(76,163,132,0.2); color:var(--dh-green);}
+.sidebar .spacer{flex:1;}
+
+/* MAIN */
+.main{flex:1; display:flex; flex-direction:column; min-width:0;}
+
+/* TOPBAR */
+.topbar{
+  background:var(--dh-dark); padding:14px 24px; display:flex;
+  align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;
+}
+.topbar .title{color:var(--dh-cream); font-size:16px; font-weight:700;}
+.topbar .subtitle{color:var(--dh-green); font-size:11px; margin-top:2px;}
+.topbar .actions{display:flex; gap:8px; align-items:center;}
+.btn-reset{
+  background:transparent; border:1px solid var(--dh-green); color:var(--dh-green);
+  border-radius:6px; padding:6px 12px; font-size:11px; cursor:pointer; display:flex;
+  align-items:center; gap:5px; transition:all .15s;
+}
+.btn-reset:hover{background:rgba(76,163,132,0.15);}
+
+/* TABS */
+.tabs{
+  background:var(--dh-dark2); display:flex; padding:0 24px; gap:2px;
+  overflow-x:auto;
+}
+.tab{
+  padding:10px 18px; color:rgba(255,255,255,0.45); font-size:12px; font-weight:600;
+  border-bottom:3px solid transparent; cursor:pointer; white-space:nowrap;
+  transition:all .15s;
+}
+.tab:hover{color:rgba(255,255,255,0.75);}
+.tab.active{color:var(--dh-cream); border-bottom-color:var(--dh-green);}
+
+/* PAGE CONTENT */
+.page{display:none; padding:16px 20px 28px;}
+.page.active{display:block;}
+
+/* KPI CARDS */
+.kpi-row{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:14px;}
+.kpi-card{
+  background:white; border-radius:var(--card-radius); padding:14px 18px;
+  box-shadow:var(--shadow); border-left:4px solid var(--dh-dark);
+}
+.kpi-card.accent2{border-left-color:var(--dh-green);}
+.kpi-card.accent3{border-left-color:var(--dh-tan);}
+.kpi-card.dark{background:var(--dh-dark); border-left-color:var(--dh-green);}
+.kpi-label{color:#888; font-size:10px; text-transform:uppercase; letter-spacing:0.7px; margin-bottom:5px; font-weight:600;}
+.kpi-card.dark .kpi-label{color:var(--dh-green);}
+.kpi-value{color:var(--dh-dark); font-size:26px; font-weight:700; line-height:1;}
+.kpi-card.dark .kpi-value{color:var(--dh-cream);}
+.kpi-sub{font-size:10px; margin-top:6px; color:var(--dh-green); display:flex; align-items:center; gap:4px;}
+.kpi-card.dark .kpi-sub{color:var(--dh-green);}
+
+/* GRID LAYOUTS */
+.grid-3{display:grid; grid-template-columns:1.6fr 1fr 1fr; gap:12px; margin-bottom:12px;}
+.grid-2{display:grid; grid-template-columns:1.4fr 1fr; gap:12px; margin-bottom:12px;}
+.grid-1{display:grid; grid-template-columns:1fr; gap:12px; margin-bottom:12px;}
+.grid-3c{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:12px;}
+
+/* PANEL */
+.panel{
+  background:white; border-radius:var(--card-radius); padding:16px;
+  box-shadow:var(--shadow); display:flex; flex-direction:column;
+}
+.panel-title{font-size:13px; font-weight:700; color:var(--dh-dark); margin-bottom:2px; display:flex; align-items:center; justify-content:space-between;}
+.panel-title .badge{font-size:10px; color:#999; font-weight:500;}
+.panel-sub{font-size:10.5px; color:#999; margin-bottom:12px;}
+.chart-wrap{position:relative; flex:1; min-height:220px;}
+.chart-wrap.tall{min-height:340px;}
+.chart-wrap.short{min-height:160px;}
+
+/* SLICERS — dropdown multi-select */
+.slicer-bar{
+  display:flex; gap:14px; flex-wrap:wrap; background:white; border-radius:var(--card-radius);
+  padding:12px 16px; margin-bottom:14px; box-shadow:var(--shadow); align-items:flex-start;
+  position:relative; z-index:20;
+}
+.slicer-group{display:flex; flex-direction:column; gap:6px; min-width:170px;}
+.slicer-group-title{font-size:10px; color:#999; text-transform:uppercase; letter-spacing:0.6px; font-weight:700;}
+
+.slicer-dropdown{ position:relative; }
+
+.dd-toggle{
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  border:1px solid #dfe5e0; background:#fafaf6; color:#33453c; border-radius:8px;
+  padding:7px 11px; font-size:12px; cursor:pointer; user-select:none; font-weight:600;
+  transition:all .12s;
+}
+.dd-toggle:hover{border-color:var(--dh-green);}
+.dd-toggle.open{border-color:var(--dh-dark); background:var(--dh-green-faint);}
+.dd-toggle-label{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.dd-toggle-arrow{font-size:10px; color:#888; flex-shrink:0; transition:transform .15s;}
+.dd-toggle.open .dd-toggle-arrow{transform:rotate(180deg); color:var(--dh-dark);}
+
+.dd-panel{
+  display:none; position:absolute; top:calc(100% + 6px); left:0; min-width:230px; max-width:280px;
+  background:white; border:1px solid #e2e8e4; border-radius:10px;
+  box-shadow:0 8px 24px rgba(0,62,45,0.16); padding:8px; z-index:50;
+}
+.dd-panel.open{display:block;}
+
+.dd-panel-actions{
+  display:flex; justify-content:space-between; padding:4px 6px 8px; margin-bottom:6px;
+  border-bottom:1px solid #eef1ee;
+}
+.dd-action{
+  font-size:10.5px; color:var(--dh-green); cursor:pointer; font-weight:700;
+  text-transform:uppercase; letter-spacing:0.3px;
+}
+.dd-action:hover{color:var(--dh-dark); text-decoration:underline;}
+
+.dd-options{max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:1px;}
+.dd-option{
+  display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:6px;
+  cursor:pointer; font-size:12px; color:#33453c; transition:background .1s;
+}
+.dd-option:hover{background:var(--dh-green-faint);}
+.dd-option input[type="checkbox"]{
+  width:14px; height:14px; accent-color:var(--dh-dark); cursor:pointer; flex-shrink:0;
+}
+.dd-option span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+
+/* TABLE */
+.table-wrap{overflow:auto; max-height:380px; border-radius:8px;}
+table{width:100%; border-collapse:collapse; font-size:11.5px;}
+thead th{
+  background:var(--dh-dark); color:var(--dh-cream); text-align:left; padding:8px 10px;
+  position:sticky; top:0; font-weight:600; font-size:10.5px; text-transform:uppercase; letter-spacing:0.4px;
+  cursor:pointer; user-select:none; white-space:nowrap;
+}
+thead th:hover{background:var(--dh-dark2);}
+thead th .sort-arrow{font-size:9px; opacity:0.6; margin-left:3px;}
+tbody td{padding:7px 10px; border-bottom:1px solid #eef1ee; color:#33453c; vertical-align:top;}
+tbody tr:hover{background:var(--dh-green-faint);}
+tbody tr:nth-child(even){background:#fbfbf7;}
+tbody tr:nth-child(even):hover{background:var(--dh-green-faint);}
+.tag{
+  display:inline-block; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700;
+}
+.tag-cheap{background:#fde8d2; color:#a85700;}
+.tag-mid{background:#fff3c4; color:#8a6d00;}
+.tag-high{background:#dcebe3; color:var(--dh-dark);}
+.tag-opp{background:var(--dh-green); color:white;}
+.num{text-align:right; font-variant-numeric:tabular-nums;}
+
+/* FOOTER */
+.footer{
+  background:var(--dh-dark2); padding:8px 24px; display:flex; justify-content:space-between;
+  color:rgba(76,163,132,0.65); font-size:10px; margin-top:auto;
+}
+
+/* INSIGHT BOX */
+.insight-box{
+  background:linear-gradient(135deg, var(--dh-dark) 0%, #00543c 100%);
+  border-radius:var(--card-radius); padding:16px 20px; color:var(--dh-cream); margin-bottom:12px;
+}
+.insight-box .ib-title{font-size:12px; font-weight:700; color:var(--dh-green); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:8px; display:flex; align-items:center; gap:6px;}
+.insight-box ul{margin:0; padding-left:18px; font-size:12px; line-height:1.9;}
+.insight-box b{color:var(--dh-green-pale);}
+
+/* SEARCH BOX */
+.search-box{
+  display:flex; align-items:center; gap:6px; background:#fafaf6; border:1px solid #dfe5e0;
+  border-radius:6px; padding:5px 10px; min-width:200px;
+}
+.search-box input{border:none; background:transparent; outline:none; font-size:12px; flex:1; color:#33453c;}
+
+/* SCATTER LEGEND */
+.legend-row{display:flex; flex-wrap:wrap; gap:10px; margin-top:8px; font-size:10.5px;}
+.legend-item{display:flex; align-items:center; gap:5px; color:#666;}
+.legend-dot{width:8px; height:8px; border-radius:50%; display:inline-block;}
+
+/* EMPTY STATE */
+.empty-state{display:flex; align-items:center; justify-content:center; height:100%; color:#aaa; font-size:12px;}
+
+/* RESPONSIVE */
+@media (max-width:1100px){
+  .grid-3{grid-template-columns:1fr;}
+  .grid-2{grid-template-columns:1fr;}
+  .grid-3c{grid-template-columns:1fr;}
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+}
+
+::-webkit-scrollbar{width:8px; height:8px;}
+::-webkit-scrollbar-track{background:#f0f0ea;}
+::-webkit-scrollbar-thumb{background:var(--dh-green-pale); border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:var(--dh-green);}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">Dh</div>
+    <div class="navitem active" data-page="overview" title="Market Overview">&#128202;</div>
+    <div class="navitem" data-page="products" title="Product Deep Dive">&#128230;</div>
+    <div class="navitem" data-page="price" title="Price & Category">&#127991;&#65039;</div>
+    <div class="navitem" data-page="whitespace" title="White Space">&#127919;</div>
+    <div class="spacer"></div>
+    <div class="navitem" title="Settings" style="opacity:.4">&#9881;&#65039;</div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div>
+        <div class="title">Phân Tích Thị Trường Gia Vị &mdash; Shopee Top 200</div>
+        <div class="subtitle" id="subtitleText">365 ngày qua &middot; 200 SKU &middot; Nguồn: Metric</div>
+      </div>
+      <div class="actions">
+        <span style="color:var(--dh-green); font-size:11px;" id="filterStatus"></span>
+        <button class="btn-reset" id="resetBtn">&#8635; Reset bộ lọc</button>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <div class="tab active" data-page="overview">Market Overview</div>
+      <div class="tab" data-page="products">Product Deep Dive</div>
+      <div class="tab" data-page="price">Price &amp; Category</div>
+      <div class="tab" data-page="whitespace">White Space</div>
+    </div>
+
+    <!-- ===================== PAGE 1: OVERVIEW ===================== -->
+    <div class="page active" id="page-overview">
+
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-label">Tổng Doanh Số (365 ngày)</div>
+          <div class="kpi-value" id="kpiTotalDS">&mdash;</div>
+          <div class="kpi-sub">&#8593; Top 200 SKU gia vị</div>
+        </div>
+        <div class="kpi-card accent2">
+          <div class="kpi-label">Tổng Lượt Bán</div>
+          <div class="kpi-value" id="kpiTotalLuotBan">&mdash;</div>
+          <div class="kpi-sub">Tổng số đơn đã bán</div>
+        </div>
+        <div class="kpi-card accent3">
+          <div class="kpi-label">Số SKU</div>
+          <div class="kpi-value" id="kpiSKU">&mdash;</div>
+          <div class="kpi-sub">Sản phẩm đang phân tích</div>
+        </div>
+        <div class="kpi-card dark">
+          <div class="kpi-label">Doanh Số TB / SKU</div>
+          <div class="kpi-value" id="kpiAvgDS">&mdash;</div>
+          <div class="kpi-sub">Hiệu suất trung bình mỗi SP</div>
+        </div>
+      </div>
+
+      <div class="slicer-bar">
+        <div class="slicer-group" style="max-width:260px;">
+          <div class="slicer-group-title">Brand</div>
+          <div class="slicer-dropdown" id="slicerBrand" data-open="false"></div>
+        </div>
+        <div class="slicer-group" style="max-width:200px;">
+          <div class="slicer-group-title">Phân khúc giá</div>
+          <div class="slicer-dropdown" id="slicerPrice" data-open="false"></div>
+        </div>
+        <div class="slicer-group" style="max-width:220px;">
+          <div class="slicer-group-title">Category</div>
+          <div class="slicer-dropdown" id="slicerCategory" data-open="false"></div>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="panel">
+          <div class="panel-title">Tổng Doanh Số theo Brand <span class="badge">Top 10 &middot; bấm để lọc</span></div>
+          <div class="panel-sub">Click vào cột để filter toàn dashboard theo brand đó</div>
+          <div class="chart-wrap tall"><canvas id="chartBrandBar"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">% Thị Phần</div>
+          <div class="panel-sub">Top 5 brand + Khác</div>
+          <div class="chart-wrap"><canvas id="chartBrandDonut"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Doanh Số theo Category</div>
+          <div class="panel-sub">Bấm để lọc</div>
+          <div class="chart-wrap"><canvas id="chartCategoryMini"></canvas></div>
+        </div>
+      </div>
+
+      <div class="insight-box" id="overviewInsight"></div>
+    </div>
+
+    <!-- ===================== PAGE 2: PRODUCTS ===================== -->
+    <div class="page" id="page-products">
+
+      <div class="kpi-row" style="grid-template-columns:repeat(3,1fr);">
+        <div class="kpi-card">
+          <div class="kpi-label">SP đang hiển thị</div>
+          <div class="kpi-value" id="kpiProdCount">&mdash;</div>
+          <div class="kpi-sub">Theo bộ lọc hiện tại</div>
+        </div>
+        <div class="kpi-card accent2">
+          <div class="kpi-label">Giá trung bình</div>
+          <div class="kpi-value" id="kpiAvgPrice">&mdash;</div>
+          <div class="kpi-sub">Trên các SP đang lọc</div>
+        </div>
+        <div class="kpi-card accent3">
+          <div class="kpi-label">Tỉ lệ đánh giá TB</div>
+          <div class="kpi-value" id="kpiAvgReview">&mdash;</div>
+          <div class="kpi-sub">Đánh giá / Lượt bán</div>
+        </div>
+      </div>
+
+      <div class="slicer-bar">
+        <div class="slicer-group" style="flex:1;">
+          <div class="search-box">&#128269; <input type="text" id="productSearch" placeholder="Tìm sản phẩm theo tên..."></div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-title">Top 10 Sản Phẩm Bán Chạy Nhất <span class="badge">theo bộ lọc hiện tại</span></div>
+          <div class="panel-sub">Doanh số 365 ngày</div>
+          <div class="chart-wrap tall"><canvas id="chartTop10"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Doanh Số vs Tỉ Lệ Đánh Giá</div>
+          <div class="panel-sub">Bong bóng to = doanh số cao &middot; màu = category</div>
+          <div class="chart-wrap tall"><canvas id="chartScatterProd"></canvas></div>
+          <div class="legend-row" id="scatterLegend"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Bảng Chi Tiết Sản Phẩm <span class="badge" id="tableCount"></span></div>
+        <div class="panel-sub">Click tiêu đề cột để sắp xếp</div>
+        <div class="table-wrap">
+          <table id="productTable">
+            <thead>
+              <tr>
+                <th data-key="sp">Sản phẩm</th>
+                <th data-key="brand">Brand</th>
+                <th data-key="category">Category</th>
+                <th data-key="gia" class="num">Giá bán</th>
+                <th data-key="ds" class="num">Doanh số 365d</th>
+                <th data-key="luot_ban" class="num">Lượt bán</th>
+                <th data-key="ti_le_dg" class="num">Tỉ lệ đánh giá</th>
+                <th data-key="phan_khuc">Phân khúc</th>
+              </tr>
+            </thead>
+            <tbody id="productTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== PAGE 3: PRICE & CATEGORY ===================== -->
+    <div class="page" id="page-price">
+
+      <div class="kpi-row" style="grid-template-columns:repeat(3,1fr);">
+        <div class="kpi-card">
+          <div class="kpi-label">Phân khúc dẫn đầu</div>
+          <div class="kpi-value" id="kpiTopSegment" style="font-size:18px;">&mdash;</div>
+          <div class="kpi-sub" id="kpiTopSegmentPct"></div>
+        </div>
+        <div class="kpi-card accent2">
+          <div class="kpi-label">Category dẫn đầu</div>
+          <div class="kpi-value" id="kpiTopCategory" style="font-size:16px;">&mdash;</div>
+          <div class="kpi-sub" id="kpiTopCategoryPct"></div>
+        </div>
+        <div class="kpi-card accent3">
+          <div class="kpi-label">Giá TB toàn thị trường</div>
+          <div class="kpi-value" id="kpiAvgPriceAll">&mdash;</div>
+          <div class="kpi-sub">200 SKU</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-title">Doanh Số theo Phân Khúc Giá</div>
+          <div class="panel-sub">Rẻ / Trung / Cao</div>
+          <div class="chart-wrap"><canvas id="chartPriceSeg"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">% Thị Phần theo Category</div>
+          <div class="panel-sub">6 nhóm sản phẩm gia vị</div>
+          <div class="chart-wrap"><canvas id="chartCategoryPie"></canvas></div>
+        </div>
+      </div>
+
+      <div class="grid-1">
+        <div class="panel">
+          <div class="panel-title">Doanh Số TB / SKU theo Category <span class="badge">Hiệu quả khai thác</span></div>
+          <div class="panel-sub">Category nào ít SKU nhưng hiệu quả cao &mdash; cơ hội mở rộng</div>
+          <div class="chart-wrap short"><canvas id="chartCategoryEfficiency"></canvas></div>
+        </div>
+      </div>
+
+      <div class="insight-box" id="priceInsight"></div>
+    </div>
+
+    <!-- ===================== PAGE 4: WHITE SPACE ===================== -->
+    <div class="page" id="page-whitespace">
+
+      <div class="kpi-row" style="grid-template-columns:repeat(3,1fr);">
+        <div class="kpi-card dark">
+          <div class="kpi-label">Sản phẩm cơ hội</div>
+          <div class="kpi-value" id="kpiWSCount">&mdash;</div>
+          <div class="kpi-sub">Doanh số cao &middot; Đánh giá thấp</div>
+        </div>
+        <div class="kpi-card accent2">
+          <div class="kpi-label">Tổng doanh số nhóm này</div>
+          <div class="kpi-value" id="kpiWSTotalDS">&mdash;</div>
+          <div class="kpi-sub">Tiềm năng thị trường</div>
+        </div>
+        <div class="kpi-card accent3">
+          <div class="kpi-label">Category phổ biến nhất</div>
+          <div class="kpi-value" id="kpiWSTopCat" style="font-size:15px;">&mdash;</div>
+          <div class="kpi-sub">Trong nhóm white space</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-title">Phân Bố White Space</div>
+          <div class="panel-sub">X = Doanh số &middot; Y = Tỉ lệ đánh giá (thấp hơn = ít cạnh tranh review)</div>
+          <div class="chart-wrap tall"><canvas id="chartWSScatter"></canvas></div>
+          <div class="legend-row" id="wsLegend"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">White Space theo Category</div>
+          <div class="panel-sub">Số lượng SP cơ hội mỗi nhóm</div>
+          <div class="chart-wrap tall"><canvas id="chartWSCategory"></canvas></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Danh Sách 48 Sản Phẩm Cơ Hội <span class="badge">Đề xuất nhập hàng</span></div>
+        <div class="panel-sub">Doanh số cao nhưng tỉ lệ đánh giá thấp &mdash; ít cạnh tranh về uy tín, dễ chen chân</div>
+        <div class="table-wrap">
+          <table id="wsTable">
+            <thead>
+              <tr>
+                <th data-key="sp">Sản phẩm</th>
+                <th data-key="brand">Brand hiện tại</th>
+                <th data-key="category">Category</th>
+                <th data-key="gia" class="num">Giá bán</th>
+                <th data-key="ds" class="num">Doanh số 365d</th>
+                <th data-key="ti_le_dg" class="num">Tỉ lệ đánh giá</th>
+              </tr>
+            </thead>
+            <tbody id="wsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="insight-box" id="wsInsight"></div>
+    </div>
+
+    <div class="footer">
+      <div>Nguồn: Metric &middot; Top 200 Gia Vị Shopee &middot; 365 ngày qua</div>
+      <div>Phân tích bởi: Nguyễn Lan Anh &middot; Dh Foods Vietnam</div>
+    </div>
+
+  </div>
+</div>
+
+<script id="dashboard-data" type="application/json">
+{"full_data": [{"sp": "[Tặng hộp hoặc sốt] Combo 3 gói sốt muối kim chi O'food 180g / gói", "gia": 91100, "ds": 2383563000, "sl": 24148, "luot_ban": 50686, "danh_gia": 11674, "brand": "O'food", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 0.2303, "category": "Sốt & Gia vị pha sẵn", "co_hoi": true}, {"sp": "Sa Tế Sò Điệp Thích Cay Sốt Trộn Mì, Hủ Tiếu, Phở Sốt Chấm Cá Viên Chiên Sốt Ướp Thịt", "gia": 59000, "ds": 812970720, "sl": 14151, "luot_ban": 78015, "danh_gia": 17262, "brand": "THÍCH CAY", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 0.2213, "category": "Sốt & Gia vị pha sẵn", "co_hoi": true}, {"sp": "Nước Mắm Tĩn Nhãn Đỏ Độ Đạm 40N Cặp 2 Chai Thủy Tinh 500ml/chai Rin Nguyên Chất Truyền Thống Sạch Không Chất Bảo Quản", "gia": 330000, "ds": 679857000, "sl": 2073, "luot_ban": 3601, "danh_gia": 7460, "brand": "Nước Mắm Tĩn", "phan_khuc": "Cao (>150k)", "ti_le_dg": 2.0716, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Mắm nêm pha sẵn cao cấp Làng Chài Xưa, nguyên liệu tươi, thơm ngon đặc biệt, chai thủy tinh 300g", "gia": 63000, "ds": 638419100, "sl": 9847, "luot_ban": 11477, "danh_gia": 1903, "brand": "Làng Chài Xưa", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 0.1658, "category": "Nước mắm & Mắm", "co_hoi": true}, {"sp": "Sốt Gà Rán Ottogi Chai 2.4KG", "gia": 145000, "ds": 548102000, "sl": 382, "luot_ban": 6715, "danh_gia": 6740, "brand": "Ottogi", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.0037, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Combo 03 hũ Sa tế sò điệp Thích Cay 250g đa dụng, tiện lợi", "gia": 199000, "ds": 496341750, "sl": 2479, "luot_ban": 3435, "danh_gia": 8030, "brand": "THÍCH CAY", "phan_khuc": "Cao (>150k)", "ti_le_dg": 2.3377, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Canh Kim Chi Thịt Gà Ăn Liền I-Soup 66g", "gia": 68000, "ds": 466309000, "sl": 716, "luot_ban": 18767, "danh_gia": 342, "brand": "I-soup", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 0.0182, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": true}, {"sp": "[Nước mắm NGON] Nước mắm Tĩn nhãn đỏ độ đạm 40N chai thủy tinh 500ml rin nguyên chất truyền thống sạch", "gia": 165000, "ds": 465830000, "sl": 2824, "luot_ban": 4724, "danh_gia": 9050, "brand": "Nước Mắm Tĩn", "phan_khuc": "Cao (>150k)", "ti_le_dg": 1.9157, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Combo 3 gói sốt muối kim chi cay dịu O'food 180g / gói tặng 1 hộp nhựa cao cấp 2L hoặc 1 gói sốt muối kim chi cùng loại", "gia": 96000, "ds": 460881000, "sl": 4664, "luot_ban": 6877, "danh_gia": 1545, "brand": "O'food", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 0.2247, "category": "Sốt & Gia vị pha sẵn", "co_hoi": true}, {"sp": "Combo 4 Nước mắm cá cơm Thuận Phát 40 độ đạm 610ml - Từ nước cốt nhĩ cá cơm Phú Quốc", "gia": 257000, "ds": 447466320, "sl": 1686, "luot_ban": 2014, "danh_gia": 5220, "brand": "Unknown", "phan_khuc": "Cao (>150k)", "ti_le_dg": 2.5919, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Sốt Trứng Muối hoàng kim Thích Cay 150g đa dụng cho các món ốc, hải sản, mì ý", "gia": 55000, "ds": 439050800, "sl": 7531, "luot_ban": 7531, "danh_gia": 111, "brand": "THÍCH CAY", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 0.0147, "category": "Sốt & Gia vị pha sẵn", "co_hoi": true}, {"sp": "[Chai 2 lít - Tiết kiệm] Nước Chấm Cá Cơm Than Làng Chài Xưa chai nhựa cao cấp 2 lít/chai Đặc Biệt Thanh Dịu An toàn", "gia": 71500, "ds": 432792200, "sl": 6014, "luot_ban": 7022, "danh_gia": 1946, "brand": "Làng Chài Xưa", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 0.2771, "category": "Khác", "co_hoi": true}, {"sp": "[ Bán chạy nhất ] Thùng 6 chai nước mắm nhỉ xuất khẩu Làng Chài Xưa Nhãn Xanh 500ml/chai", "gia": 320000, "ds": 422330000, "sl": 1329, "luot_ban": 2695, "danh_gia": 8290, "brand": "Làng Chài Xưa", "phan_khuc": "Cao (>150k)", "ti_le_dg": 3.0761, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Combo 2 nước mắm cá cơm Thuận Phát 40 độ đạm 610ml - Từ nước cốt nhĩ cá cơm Phú Quốc", "gia": 129000, "ds": 408182084, "sl": 3243, "luot_ban": 5436, "danh_gia": 1581, "brand": "THUẬN PHÁT", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 0.2908, "category": "Nước mắm & Mắm", "co_hoi": true}, {"sp": "Tương ớt gói Cholimex 10g siêu tiện lợi (01 túi gồm 50 gói)", "gia": 27900, "ds": 406509200, "sl": 13138, "luot_ban": 14551, "danh_gia": 1027, "brand": "Cholimex", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.0706, "category": "Sốt & Gia vị pha sẵn", "co_hoi": true}, {"sp": "Combo 2 sốt muối kim chi O'food 180g/gói", "gia": 60000, "ds": 358654800, "sl": 6409, "luot_ban": 21007, "danh_gia": 4494, "brand": "O'food", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 0.2139, "category": "Sốt & Gia vị pha sẵn", "co_hoi": true}, {"sp": "Xốt Teriyaki O'chef Ottogi 2kg", "gia": 112000, "ds": 321542720, "sl": 2776, "luot_ban": 3245, "danh_gia": 2630, "brand": "Ottogi", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 0.8105, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Xốt phô mai Ottogi 1kg", "gia": 94000, "ds": 301197500, "sl": 3106, "luot_ban": 3106, "danh_gia": 4060, "brand": "Ottogi", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.3071, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Combo sốt trứng muối & bơ tỏi hoàng kim Thích Cay 150g chuẩn vị nhà hàng cho các món ốc, hải sản, chấm bánh mì", "gia": 99000, "ds": 301036000, "sl": 3008, "luot_ban": 3008, "danh_gia": 5480, "brand": "THÍCH CAY", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.8218, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "[Thùng 6 chai nước mắm ngon] Nước Mắm Tĩn cá cơm than Nhãn Đỏ Độ Đạm 40N Thùng 6 Chai Thủy Tinh 500ml/chai", "gia": 990000, "ds": 297441000, "sl": 3090, "luot_ban": 6150, "danh_gia": 1730, "brand": "Nước Mắm Tĩn", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.2813, "category": "Nước mắm & Mắm", "co_hoi": true}, {"sp": "COMBO 2 cá vàng 60N 500ml Nước Mắm Tĩn Cá Cơm Ruột Đỏ Chai Thuỷ Tinh 500ml Nước Mắm Truyền Thống", "gia": 418000, "ds": 292211000, "sl": 6960, "luot_ban": 9400, "danh_gia": 2380, "brand": "Nước Mắm Tĩn", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.2532, "category": "Nước mắm & Mắm", "co_hoi": true}, {"sp": "Sốt muối kim chi O'food gói 180g, chuẩn vị Hàn Quốc", "gia": 30000, "ds": 287189500, "sl": 959, "luot_ban": 43733, "danh_gia": 6451, "brand": "O'food", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.1475, "category": "Sốt & Gia vị pha sẵn", "co_hoi": true}, {"sp": "Muối hồng Himalaya Vipep nguyên hạt, xay nhuyễn 120g/200g/250g/500g/1100g - Gia vị Vipep", "gia": 18000, "ds": 282481350, "sl": 11986, "luot_ban": 30129, "danh_gia": 5274, "brand": "Vipep", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.175, "category": "Muối & Bột gia vị", "co_hoi": true}, {"sp": "Xốt Spaghetti vị cà chua O'chef Ottogi 2kg", "gia": 129344, "ds": 272461696, "sl": 2099, "luot_ban": 2778, "danh_gia": 3640, "brand": "Ottogi", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.3103, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "[Bán chạy nhất] Nước mắm Tĩn nhãn xưa độ đạm 41N 500ml rin nguyên chất truyền thống sạch không chất bảo quản", "gia": 273000, "ds": 266152000, "sl": 9750, "luot_ban": 1952, "danh_gia": 3220, "brand": "Nước Mắm Tĩn", "phan_khuc": "Cao (>150k)", "ti_le_dg": 1.6496, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Combo 2 Nước mắm cá cơm Thuận Phát 60 độ đạm 490ml - Từ 3 loại cá cơm Phú Quốc", "gia": 220000, "ds": 258295358, "sl": 1199, "luot_ban": 1721, "danh_gia": 3580, "brand": "THUẬN PHÁT", "phan_khuc": "Cao (>150k)", "ti_le_dg": 2.0802, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Sốt phô mai trứng muối hoàng kim Thích Cay 150g chuẩn vị cho các món ốc, hải sản", "gia": 55000, "ds": 238694400, "sl": 3688, "luot_ban": 3688, "danh_gia": 6410, "brand": "THÍCH CAY", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.7381, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "[Tặng túi vải + mỳ ý] Combo 5 gói SpaghettiO'Food mix 5 vị 120g", "gia": 125000, "ds": 238027000, "sl": 1901, "luot_ban": 1901, "danh_gia": 4690, "brand": "O'food", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 2.4671, "category": "Khác", "co_hoi": false}, {"sp": "Kho quẹt tôm thịt Thích Cay đóng hũ tiện lợi 250g - tôm khô, thịt ba chỉ, tóp mỡ, tiêu xanh", "gia": 79000, "ds": 222007490, "sl": 2776, "luot_ban": 7198, "danh_gia": 1809, "brand": "THÍCH CAY", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 0.2513, "category": "Khác", "co_hoi": true}, {"sp": "Chao siêu béo Làng Chài Xưa 850g/hủ làm từ khoai môn hương vị đậm đà và thơm ngon", "gia": 169000, "ds": 217617200, "sl": 1248, "luot_ban": 203, "danh_gia": 3990, "brand": "Làng Chài Xưa", "phan_khuc": "Cao (>150k)", "ti_le_dg": 19.6552, "category": "Khác", "co_hoi": false}, {"sp": "Sốt ướp đồ nướng Lee Kum Kee 2.45kg", "gia": 294900, "ds": 216877700, "sl": 7510, "luot_ban": 1147, "danh_gia": 1000, "brand": "Lee Kum Kee", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.8718, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Mắm Nêm Ngon Pha Sẵn Thuận Phát 950ml", "gia": 46000, "ds": 216299000, "sl": 432, "luot_ban": 4932, "danh_gia": 2600, "brand": "THUẬN PHÁT", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.5272, "category": "Nước mắm & Mắm", "co_hoi": true}, {"sp": "Tương cà gói Cholimex 10g siêu tiện lợi (01 túi gồm 50 gói)", "gia": 27900, "ds": 214799000, "sl": 6944, "luot_ban": 7695, "danh_gia": 6130, "brand": "Cholimex", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.7966, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Sốt Spaghetti O'Food gói 120g", "gia": 20000, "ds": 213304000, "sl": 12491, "luot_ban": 19887, "danh_gia": 2497, "brand": "O'food", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.1256, "category": "Sốt & Gia vị pha sẵn", "co_hoi": true}, {"sp": "Combo 5 chai Nước Mắm Phú Quốc Cao Cấp Vị Xưa Barona 40 Độ Đạm 500ml [tặng 1 hũ thủy tinh cao cấp 1 lít]", "gia": 427050, "ds": 209704000, "sl": 5300, "luot_ban": 8520, "danh_gia": 2210, "brand": "Barona", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.2594, "category": "Nước mắm & Mắm", "co_hoi": true}, {"sp": "Combo 02 Chai Nước Mắm Tôm Biển độ đạm 45N tự nhiên - Nước Mắm Tĩn 500ml/chai Hồng Ngọc Đại Dương nguyên chất", "gia": 398000, "ds": 208329000, "sl": 5210, "luot_ban": 126, "danh_gia": 2980, "brand": "Nước Mắm Tĩn", "phan_khuc": "Cao (>150k)", "ti_le_dg": 23.6508, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Bột Gia Vị Vipep gia vị nấu ăn hành bột, tỏi bột, ớt, ngũ vị hương, tiêu, quế, sả bột, ngò, nghệ", "gia": 17000, "ds": 206632080, "sl": 22548, "luot_ban": 47492, "danh_gia": 3675, "brand": "Vipep", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.0774, "category": "Muối & Bột gia vị", "co_hoi": true}, {"sp": "Canh I.Soup Rau Tập Tàng Nấm Rơm túi 5 viên_ túi 35gr", "gia": 58000, "ds": 204914000, "sl": 3533, "luot_ban": 3533, "danh_gia": 5210, "brand": "I-soup", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.4747, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": false}, {"sp": "Xốt ướp thịt nướng Cholimex hũ thuỷ tinh 600g", "gia": 49500, "ds": 200519000, "sl": 3653, "luot_ban": 4815, "danh_gia": 5840, "brand": "Cholimex", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 1.2129, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Bánh phồng Pani Puri hình quả bóng tròn, chiên giòn, phồng to, thơm đặc biệt", "gia": 85000, "ds": 199777000, "sl": 2023, "luot_ban": 2023, "danh_gia": 3180, "brand": "THÍCH CAY", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.5719, "category": "Khác", "co_hoi": false}, {"sp": "Sốt Spaghetti Vị Truyền Thống Ottogi Gói 1kg", "gia": 72810, "ds": 195489240, "sl": 2707, "luot_ban": 4723, "danh_gia": 6430, "brand": "Ottogi", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.3614, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Combo 2 Hũ Sa Tế Sò Điệp Thích Cay 250g Tiện Lợi Sốt Trộn Mì Đa Dụng Sa Tế Cay Trộn Hủ Tiếu", "gia": 149000, "ds": 194185438, "sl": 1277, "luot_ban": 1663, "danh_gia": 4420, "brand": "THÍCH CAY", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 2.6578, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Thùng 6 chai nước mắm nhỉ cá cơm than Làng Chài Xưa 525ml/chai sánh đặc thịt cá 300 năm truyền thống", "gia": 218000, "ds": 186864600, "sl": 8850, "luot_ban": 1222, "danh_gia": 3520, "brand": "Làng Chài Xưa", "phan_khuc": "Cao (>150k)", "ti_le_dg": 2.8805, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Mì Trộn Phô Mai Ottogi Mini 75g", "gia": 10150, "ds": 184521200, "sl": 17613, "luot_ban": 27512, "danh_gia": 2073, "brand": "Ottogi", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.0753, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": true}, {"sp": "Gia vị nấu phở bò Hà Nội Natural DH Foods nêm sẵn thành phần tự nhiên gói 24gr - DHGVT75", "gia": 16738, "ds": 183070636, "sl": 12193, "luot_ban": 25397, "danh_gia": 1124, "brand": "Dh Foods", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.0443, "category": "Muối & Bột gia vị", "co_hoi": true}, {"sp": "Canh I.Soup Canh Măng Chua Nấm Hương túi 5 viên_ túi 50gr", "gia": 58000, "ds": 179568000, "sl": 3096, "luot_ban": 3096, "danh_gia": 4380, "brand": "I-soup", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.4147, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": false}, {"sp": "Sốt gà chiên 2 vị cay và phô mai O'food gói 120g", "gia": 19500, "ds": 178832500, "sl": 8547, "luot_ban": 21942, "danh_gia": 2277, "brand": "O'food", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.1038, "category": "Sốt & Gia vị pha sẵn", "co_hoi": true}, {"sp": "Nước mắm chay 3 trong 1 Làng Chài Xưa (01 chai) 525ml trái thơm nấm ngọt đậu nành 300 năm truyền thống", "gia": 49000, "ds": 177444800, "sl": 3617, "luot_ban": 8194, "danh_gia": 1439, "brand": "Làng Chài Xưa", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.1756, "category": "Nước mắm & Mắm", "co_hoi": true}, {"sp": "Sa tế sò điệp Thích Cay 250g, trộn mì, hủ tiếu, phở, sốt cá viên chiên, dùng để ướp thịt tiện lợi ST250", "gia": 79000, "ds": 177173500, "sl": 2005, "luot_ban": 6479, "danh_gia": 1384, "brand": "THÍCH CAY", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 0.2136, "category": "Sốt & Gia vị pha sẵn", "co_hoi": true}, {"sp": "Nước mắm chay cao cấp Shiitake ủ chượp từ đậu nành, nấm ngọt Shiitake và trái thơm, chai nhựa 525ml/chai Làng Chài Xưa", "gia": 65000, "ds": 168414000, "sl": 1519, "luot_ban": 3183, "danh_gia": 4370, "brand": "Làng Chài Xưa", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.3729, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Bột tỏi nguyên chất Natural DH Foods chế biến thực phẩm 60gr - DHGVT58", "gia": 18863, "ds": 167786068, "sl": 9059, "luot_ban": 18364, "danh_gia": 3289, "brand": "Dh Foods", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.1791, "category": "Muối & Bột gia vị", "co_hoi": true}, {"sp": "Túi 100g bánh Pani Puri tặng kèm Sốt me béo 120ml Thích Cay", "gia": 109000, "ds": 165600000, "sl": 1195, "luot_ban": 1195, "danh_gia": 2140, "brand": "THÍCH CAY", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.7908, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "[Thùng 6 chai] Nước mắm nhỉ 40 độ đạm Làng Chài Xưa nhãn vàng chai thủy tinh 500ml ủ chượp 2 lần đậm đà thơm ngon", "gia": 530000, "ds": 161310000, "sl": 2990, "luot_ban": 4470, "danh_gia": 1240, "brand": "Làng Chài Xưa", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.2774, "category": "Nước mắm & Mắm", "co_hoi": true}, {"sp": "Sốt lẩu hoàn chỉnh O'food gói 180g, có 7 vị", "gia": 26000, "ds": 157026000, "sl": 5626, "luot_ban": 10316, "danh_gia": 1048, "brand": "O'food", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.1016, "category": "Sốt & Gia vị pha sẵn", "co_hoi": true}, {"sp": "Muối Hồng Himalaya Xay Nhuyễn Vipep Hũ Nhựa 1.1kg dùng nấu ăn, ngâm chân thải độc - Gia vị Vipep", "gia": 89000, "ds": 156082650, "sl": 1955, "luot_ban": 4491, "danh_gia": 7230, "brand": "Vipep", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.6099, "category": "Muối & Bột gia vị", "co_hoi": false}, {"sp": "Combo 3 Bánh Tráng Ớt Tây Ninh Tinh Nguyên (200gx3gói)", "gia": 47111, "ds": 156049400, "sl": 2767, "luot_ban": 4231, "danh_gia": 6920, "brand": "TINH NGUYÊN", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 1.6355, "category": "Khác", "co_hoi": false}, {"sp": "Muối Hồng Himalaya Xay Nhuyễn Vipep Túi 500g dùng làm gia vị, ngâm chân - Gia vị Vipep", "gia": 31000, "ds": 155064040, "sl": 4336, "luot_ban": 5682, "danh_gia": 6540, "brand": "Vipep", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 1.151, "category": "Muối & Bột gia vị", "co_hoi": false}, {"sp": "[COMBO 02 BÌNH GỐM 60 ĐẠM] Nước Mắm Tĩn cá cơm ruột đỏ độ đạm 60N 250ml rin nguyên chất", "gia": 418000, "ds": 154120000, "sl": 3670, "luot_ban": 5780, "danh_gia": 1290, "brand": "Nước Mắm Tĩn", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.2232, "category": "Nước mắm & Mắm", "co_hoi": true}, {"sp": "Dầu hào Lee Kum Kee Kum Chun Oyster Sauce 2.5kg", "gia": 119000, "ds": 153088000, "sl": 1354, "luot_ban": 2115, "danh_gia": 2880, "brand": "Lee Kum Kee", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.3617, "category": "Nước tương & Dầu hào", "co_hoi": false}, {"sp": "Dầu màu điều Dh Foods gia vị chế biến thực phẩm, tạo màu tự nhiên cho món ăn lọ 100ml", "gia": 27667, "ds": 152260262, "sl": 5535, "luot_ban": 9386, "danh_gia": 1584, "brand": "Dh Foods", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.1688, "category": "Muối & Bột gia vị", "co_hoi": true}, {"sp": "Thùng 6 nước mắm 60N - 500ml - Nước Mắm Tĩn Cá Cơm Ruột Đỏ Chai Thuỷ Tinh 500ml/chai Truyền Thống", "gia": 1258000, "ds": 149911000, "sl": 1190, "luot_ban": 1670, "danh_gia": 380, "brand": "Nước Mắm Tĩn", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.2275, "category": "Nước mắm & Mắm", "co_hoi": true}, {"sp": "Sốt trứng muối Dh Foods gia vị chấm hải sản, thịt nướng, bánh mì, snack, khoai tây chiên, mì Ý, beefsteak lọ 100gr", "gia": 34168, "ds": 148630800, "sl": 435, "luot_ban": 5025, "danh_gia": 7070, "brand": "Dh Foods", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 1.407, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Bánh Pani Puri hình quả bóng tròn, chiên giòn rụm, phồng to, thơm đặc biệt", "gia": 85000, "ds": 146189500, "sl": 1809, "luot_ban": 1809, "danh_gia": 3620, "brand": "THÍCH CAY", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 2.0011, "category": "Khác", "co_hoi": false}, {"sp": "[Tặng kem 1 túi vài] COMBO 10 GÓI Sốt muối kim chi O'food gói 180g, chuẩn vị Hàn Quốc", "gia": 300000, "ds": 139840000, "sl": 5000, "luot_ban": 126, "danh_gia": 3500, "brand": "O'food", "phan_khuc": "Cao (>150k)", "ti_le_dg": 27.7778, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Bột hành nguyên chất Natural DH Foods chế biến thực phẩm 40gr - DHGVT57", "gia": 19920, "ds": 138440346, "sl": 788, "luot_ban": 15294, "danh_gia": 2739, "brand": "Dh Foods", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.1791, "category": "Muối & Bột gia vị", "co_hoi": true}, {"sp": "COMBO 2 BÌNH Nước mắm Tôm Biển Truyền Thống 60N đạm - Nước mắm Tĩn - 500ml/bình Thơm Ngon Hảo Hạng", "gia": 796000, "ds": 138381000, "sl": 1730, "luot_ban": 4900, "danh_gia": 1040, "brand": "Nước Mắm Tĩn", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.2122, "category": "Nước mắm & Mắm", "co_hoi": true}, {"sp": "Cặp 2 chai 60 độ đạm Nước Mắm Tĩn Cá Cơm Ruột Đỏ 60N Chai Thuỷ Tinh 250ml truyền thống không chất bảo quản", "gia": 218000, "ds": 135695000, "sl": 6170, "luot_ban": 1121, "danh_gia": 2430, "brand": "Nước Mắm Tĩn", "phan_khuc": "Cao (>150k)", "ti_le_dg": 2.1677, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "1 Bình gốm Nước mắm Tôm Biển Truyền Thống 60N đạm - Nước mắm Tĩn - 500ml Thơm Ngon Hảo Hạng Không Chất Bảo Quản", "gia": 436000, "ds": 134930000, "sl": 3000, "luot_ban": 3970, "danh_gia": 740, "brand": "Nước Mắm Tĩn", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.1864, "category": "Nước mắm & Mắm", "co_hoi": true}, {"sp": "Sốt phô mai Dh Foods gia vị chấm hải sản, thịt nướng, bánh mì, snack, khoai tây chiên, mì Ý, beefsteak,... lọ 100gr", "gia": 34168, "ds": 134211904, "sl": 3928, "luot_ban": 4475, "danh_gia": 7030, "brand": "Dh Foods", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 1.5709, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Nước mắm ớt tỏi chua ngọt cao cấp Làng Chài Xưa, nguyên liệu tươi, thơm ngon đặc biệt, pha sẵn từ chanh tỏi ớt vị đậm đà", "gia": 63000, "ds": 133740000, "sl": 2064, "luot_ban": 3573, "danh_gia": 6420, "brand": "Làng Chài Xưa", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.7968, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Combo 2 Sốt Phô Mai, Trứng Muối Dh Foods 100g - Béo Ngậy Chấm Trực Tiếp Đồ Chiên, Nướng, Trộn Salad, Chế Biến Hải Sản", "gia": 35000, "ds": 130620177, "sl": 3729, "luot_ban": 4149, "danh_gia": 6860, "brand": "Dh Foods", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 1.6534, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "[Chai thủy tinh 500ml] Nước mắm chay cao cấp Làng Chài Xưa nấm ngọt Shiitake Nhật Bản, đậu nành, thơm dứa", "gia": 158000, "ds": 127763000, "sl": 7990, "luot_ban": 263, "danh_gia": 5190, "brand": "Nước Mắm Tĩn", "phan_khuc": "Cao (>150k)", "ti_le_dg": 19.7338, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Gia vị nấu phở gà Natural DH Foods nêm sẵn thành phần tự nhiên gói 20gr - DHGVT77", "gia": 15632, "ds": 127303143, "sl": 9085, "luot_ban": 18551, "danh_gia": 9730, "brand": "Dh Foods", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.5245, "category": "Muối & Bột gia vị", "co_hoi": true}, {"sp": "Sốt tiêu đen Dh Foods gia vị chế biến thịt nướng, hải sản lọ 200gr", "gia": 25152, "ds": 127071166, "sl": 5087, "luot_ban": 8813, "danh_gia": 9980, "brand": "Dh Foods", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 1.1324, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Hộp 6 gói snack rong cuộn nướng giòn 6g O'food", "gia": 78000, "ds": 126480000, "sl": 141, "luot_ban": 1996, "danh_gia": 2690, "brand": "O'food", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.3477, "category": "Khác", "co_hoi": false}, {"sp": "Combo 3 Hũ Sa tế Sò Điệp Thích Cay 250g Sốt Trộn Mì Đa Dụng Sa Tế Cay Trộn Hủ Tiếu", "gia": 205000, "ds": 126293000, "sl": 6310, "luot_ban": 6820, "danh_gia": 1410, "brand": "THÍCH CAY", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.2067, "category": "Sốt & Gia vị pha sẵn", "co_hoi": true}, {"sp": "[Thùng 6 chai] Nước mắm nhỉ Làng Chài Xưa nhãn xanh xuất khẩu, nhãn đỏ đậm đà, nhãn vàng sánh đặc 500ml/chai thủy tinh", "gia": 320000, "ds": 121966000, "sl": 3730, "luot_ban": 6560, "danh_gia": 1750, "brand": "Làng Chài Xưa", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.2668, "category": "Nước mắm & Mắm", "co_hoi": true}, {"sp": "Thùng 6 chai nước mắm CHAY 3 trong 1 Làng Chài Xưa 525ml trái thơm nấm ngọt đậu nành 300 năm truyền thống", "gia": 259000, "ds": 120487000, "sl": 4030, "luot_ban": 7390, "danh_gia": 1900, "brand": "Làng Chài Xưa", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.2571, "category": "Nước mắm & Mắm", "co_hoi": true}, {"sp": "Tương ớt Cholimex chai Pet 5kg", "gia": 127800, "ds": 120183000, "sl": 8830, "luot_ban": 9110, "danh_gia": 1640, "brand": "Cholimex", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 0.18, "category": "Sốt & Gia vị pha sẵn", "co_hoi": true}, {"sp": "Nước mắm tôm biển Làng Chài Xưa Hồng Ngọc Đại Dương 125ml/chai", "gia": 10000, "ds": 119662000, "sl": 11931, "luot_ban": 21538, "danh_gia": 4601, "brand": "Làng Chài Xưa", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.2136, "category": "Nước mắm & Mắm", "co_hoi": true}, {"sp": "Bộ Gia Vị Tự Nhiên DH FOODS Gừng Bột, Hành Bột, Sả Bột, Tỏi Bột, Nghệ Bột, Ớt Bột, Thảo Quả, Hạt Dổi, Hạt Mắc Khén", "gia": 12000, "ds": 118060300, "sl": 9565, "luot_ban": 9565, "danh_gia": 5640, "brand": "Dh Foods", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.5896, "category": "Muối & Bột gia vị", "co_hoi": true}, {"sp": "Tương cà Cholimex chai pet 2.1kg", "gia": 58500, "ds": 117916500, "sl": 1857, "luot_ban": 1937, "danh_gia": 2710, "brand": "Cholimex", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.3991, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Xốt ướp thịt nướng gói 70g", "gia": 7500, "ds": 117267750, "sl": 15684, "luot_ban": 21239, "danh_gia": 7390, "brand": "Cholimex", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.3479, "category": "Sốt & Gia vị pha sẵn", "co_hoi": true}, {"sp": "Sốt ướp thịt Hàn Quốc OFood gói 80g, giúp thị mềm, ngọt, thơm dậy vị dùng cho 400g thịt", "gia": 11000, "ds": 116989000, "sl": 10633, "luot_ban": 25665, "danh_gia": 3543, "brand": "O'food", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.138, "category": "Sốt & Gia vị pha sẵn", "co_hoi": true}, {"sp": "Tương ớt Cholimex Chai Pet 2.1kg", "gia": 58500, "ds": 116893500, "sl": 1868, "luot_ban": 2034, "danh_gia": 3530, "brand": "Cholimex", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.7355, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Sốt Spaghetti O'Food chai 220g", "gia": 35000, "ds": 115934000, "sl": 3635, "luot_ban": 859, "danh_gia": 1431, "brand": "O'food", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 1.6659, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Nước tương cao cấp Shiitake lên men tự nhiên từ đậu nành và nấm ngọt Shiitake, chai nhựa 525ml/chai Làng Chài Xưa", "gia": 65000, "ds": 115302000, "sl": 9890, "luot_ban": 1675, "danh_gia": 2840, "brand": "Làng Chài Xưa", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.6955, "category": "Nước tương & Dầu hào", "co_hoi": false}, {"sp": "Sốt ướp gà nướng mật ong Dh Foods gia vị hoàn chỉnh nêm sẵn thành phần tự nhiên ướp các món gà, thịt, sườn gói 65gr", "gia": 12727, "ds": 114173917, "sl": 8971, "luot_ban": 9679, "danh_gia": 7470, "brand": "Dh Foods", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.7718, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Combo 2 Hũ Sa tế Sò Điệp Thích Cay 250g Sốt Trộn Mì Đa Dụng Sa Tế Cay Trộn Hủ Tiếu Trộn Phở", "gia": 159000, "ds": 113509000, "sl": 7170, "luot_ban": 8370, "danh_gia": 1920, "brand": "THÍCH CAY", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.2294, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Kho Quẹt Tôm Thịt Thích Cay 150g Ba Chỉ Tóp Mỡ Hàng Loại 1 Cao Cấp An Toàn Chuẩn Vị", "gia": 55000, "ds": 113389000, "sl": 1917, "luot_ban": 3042, "danh_gia": 7010, "brand": "THÍCH CAY", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 2.3044, "category": "Khác", "co_hoi": false}, {"sp": "Nước trôn gỏi Thích Cay, sốt trộn salad, thơm ngon, tiện dụng, công thức gia truyền", "gia": 63000, "ds": 113379500, "sl": 193, "luot_ban": 7396, "danh_gia": 1761, "brand": "THÍCH CAY", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 0.2381, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Nước dùng Lẩu Barona nấu ngon chuẩn vị (Lẩu Thái, Lẩu Kim Chi, Lẩu Riêu Cua, Lẩu Chua Cay, Lẩu Bò, Lẩu Gà)", "gia": 25000, "ds": 112294864, "sl": 3435, "luot_ban": 4082, "danh_gia": 2370, "brand": "Barona", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.5806, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": false}, {"sp": "Nước trôn gỏi Thích Cay 250ml, sốt trộn salad, thơm ngon, tiện dụng, công thức gia truyền TG250-1C530334", "gia": 65000, "ds": 111615500, "sl": 1658, "luot_ban": 2119, "danh_gia": 3460, "brand": "THÍCH CAY", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.6328, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Nước Dùng Lẩu Thái Barona 180g tươi ngon chuẩn vị không cần nêm nếm", "gia": 33117, "ds": 110266603, "sl": 3367, "luot_ban": 10188, "danh_gia": 1173, "brand": "Barona", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.1151, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": false}, {"sp": "Nước Mắm Cao Cấp Vị Xưa Barona 40 Độ Đạm 500ml tặng 45g tiêu hạt", "gia": 94900, "ds": 109678790, "sl": 1292, "luot_ban": 291, "danh_gia": 4730, "brand": "Barona", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 16.2543, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Combo 2 Chai Nước mắm Tĩn Trẻ Em Cho Bé Ăn Dặm độ đạm 42N chai thủy tinh 250ml/chai rin nguyên chất nhiều cá ít muối", "gia": 187000, "ds": 109531000, "sl": 5730, "luot_ban": 1241, "danh_gia": 3080, "brand": "Nước Mắm Tĩn", "phan_khuc": "Cao (>150k)", "ti_le_dg": 2.4819, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "[Tặng mì ý] Combo 3 sốt spaghetti mix 3 vị mới", "gia": 92000, "ds": 108495000, "sl": 1175, "luot_ban": 1175, "danh_gia": 2410, "brand": "O'food", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 2.0511, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Lốc 8 gói mì kim chi Ottogi 120g", "gia": 72192, "ds": 107809992, "sl": 1547, "luot_ban": 4905, "danh_gia": 1195, "brand": "Ottogi", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 0.2436, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": false}, {"sp": "Sốt chấm thịt nướng Hàn Quốc O'food chai 250g", "gia": 32000, "ds": 106054936, "sl": 3333, "luot_ban": 5419, "danh_gia": 1073, "brand": "O'food", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.198, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Combo 2 Gói Nước dùng Phở Bò Barona 150g, tặng tiêu hạt", "gia": 71820, "ds": 102645662, "sl": 1315, "luot_ban": 1642, "danh_gia": 1850, "brand": "Barona", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.1267, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": false}, {"sp": "Tương ớt Cholimex chai Pet 830g", "gia": 27000, "ds": 102480000, "sl": 3421, "luot_ban": 3943, "danh_gia": 8890, "brand": "Cholimex", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 2.2546, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Lốc 5 Gói Mì Yeul Cay Ottogivn (5x120g)", "gia": 64500, "ds": 102260500, "sl": 1581, "luot_ban": 2754, "danh_gia": 5730, "brand": "Ottogi", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 2.0806, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": false}, {"sp": "[ GIÁ TỐT ] Nước Mắm Nhỉ Làng Chài Xưa Xuất Khẩu Nhãn Xanh Chai Thủy Tinh 500ml Cốt Nhỉ Đặc Biệt Vị Dịu Nhẹ", "gia": 58000, "ds": 100842000, "sl": 1683, "luot_ban": 3159, "danh_gia": 8020, "brand": "Làng Chài Xưa", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 2.5388, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Xốt cá chiên Cholimex gói 90g tiện lợi", "gia": 7380, "ds": 100761600, "sl": 12307, "luot_ban": 12307, "danh_gia": 2974, "brand": "Cholimex", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.2417, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "[Thùng 6 chai] Nước mắm tôm biển Làng Chài Xưa 525ml/chai Hồng Ngọc Đại Dương 300 năm truyền thống", "gia": 228000, "ds": 100168000, "sl": 3750, "luot_ban": 9200, "danh_gia": 2990, "brand": "Làng Chài Xưa", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.325, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Sữa chua ngũ sắc sấy thăng hoa I-Yaua hũ 55g (việt quất, sầu riêng, chuối, dâu và truyền thống)", "gia": 68000, "ds": 99892000, "sl": 1469, "luot_ban": 3487, "danh_gia": 6120, "brand": "I-Ya.ua", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.7551, "category": "Khác", "co_hoi": false}, {"sp": "Nước Dùng Phở Bò Barona 150g tươi ngon chuẩn vị không cần nêm nếm", "gia": 35910, "ds": 99661672, "sl": 2635, "luot_ban": 5863, "danh_gia": 4720, "brand": "Barona", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.805, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": false}, {"sp": "Lẩu Thái Ngon Thuận Phát 1100g", "gia": 47000, "ds": 98246100, "sl": 189, "luot_ban": 2179, "danh_gia": 980, "brand": "THUẬN PHÁT", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.4497, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": false}, {"sp": "Sốt teriyaki hoàn chỉnh O'food chai 250g", "gia": 32000, "ds": 96688000, "sl": 3028, "luot_ban": 4211, "danh_gia": 6140, "brand": "O'food", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 1.4581, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Oppa mì tương đen vị sườn heo ăn liền Ottogi 65g", "gia": 4900, "ds": 96196700, "sl": 19247, "luot_ban": 19247, "danh_gia": 1608, "brand": "Ottogi", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.0835, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": false}, {"sp": "[Combo 3 Chai] Nước Mắm Nhỉ Làng Chài Xưa Cá Cơm Than, Tôm Biển, Cá Cơm Ruột Đỏ 525ml/chai nhựa cao cấp, tiết kiệm", "gia": 119000, "ds": 9571160079, "sl": 7440, "luot_ban": 1213, "danh_gia": 4310, "brand": "Làng Chài Xưa", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 3.5532, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Ớt xào xé lưỡi Thích Cay 150g đa dụng cho các tín đồ mê ăn cay, dùng trong nhiều món ăn hàng ngày", "gia": 53900, "ds": 93526950, "sl": 1701, "luot_ban": 2969, "danh_gia": 6090, "brand": "THÍCH CAY", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 2.0512, "category": "Khác", "co_hoi": false}, {"sp": "Sốt ướp thịt Hàn Quốc O'Food chai 240g, ướp thịt chiên, nướng, BBQ, thịt xào dùng cho 1,2kg thịt", "gia": 32000, "ds": 92773000, "sl": 2922, "luot_ban": 8149, "danh_gia": 1468, "brand": "O'food", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.1801, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Combo 4 chai nước chấm pha sẵn (Mắm nêm, Nước mắm chua ngọt, Nước mắm gừng, Nước mắm me) Làng Chài Xưa nguyên liệu tươi", "gia": 238000, "ds": 92119000, "sl": 3840, "luot_ban": 5560, "danh_gia": 1440, "brand": "Làng Chài Xưa", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.259, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Rau tiến vua Vân Nam khô dai giòn, thanh mát 80g - 250g dùng trộn gỏi, nhúng lẩu", "gia": 55000, "ds": 91899000, "sl": 1553, "luot_ban": 3079, "danh_gia": 6770, "brand": "THÍCH CAY", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 2.1988, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": false}, {"sp": "Nước tương Lee Kum Kee Soy Sauce 500ml vị Việt Nam Nước Tương Đậu Nành (Combo 2 chai)", "gia": 55200, "ds": 90579700, "sl": 17, "luot_ban": 2749, "danh_gia": 4330, "brand": "Lee Kum Kee", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.5751, "category": "Nước tương & Dầu hào", "co_hoi": false}, {"sp": "Xốt ướp Xá Xíu Cholimex hũ thuỷ tinh 600g", "gia": 49500, "ds": 90222000, "sl": 1642, "luot_ban": 234, "danh_gia": 2740, "brand": "Cholimex", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 11.7094, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "[Date mới] Nước mắm nhỉ cá cơm than Làng Chài Xưa 525ml (01 chai) sánh đặc thịt cá 300 năm truyền thống", "gia": 37000, "ds": 897940000, "sl": 2370, "luot_ban": 543, "danh_gia": 1144, "brand": "Làng Chài Xưa", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 2.1068, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Nước tương Hương Việt Hảo Vị 7ml (01 túi gồm 50 gói tiện lợi sử dụng)", "gia": 20700, "ds": 88398200541, "sl": 38455, "luot_ban": 4474, "danh_gia": 3160, "brand": "Cholimex", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.7063, "category": "Nước tương & Dầu hào", "co_hoi": false}, {"sp": "Sốt kim quất Dh Foods gia vị chấm, chế biến thịt bò nướng, steak, trộn salad lọ 200gr", "gia": 36105, "ds": 87658068, "sl": 2596, "luot_ban": 3487, "danh_gia": 5430, "brand": "Dh Foods", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 1.5572, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Xì dầu đặc biệt Lee Kum Kee Premium Dark Soy Sauce 1,75L", "gia": 124100, "ds": 87109400, "sl": 7120, "luot_ban": 1166, "danh_gia": 1460, "brand": "Lee Kum Kee", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.2521, "category": "Nước tương & Dầu hào", "co_hoi": false}, {"sp": "Nước Mắm Phú Quốc Cao Cấp Vị Xưa Barona 40 độ đạm 1 Thùng (6 chai x 500ml) [tặng 500g đường và 45g tiêu hạt]", "gia": 501072, "ds": 87010200, "sl": 1840, "luot_ban": 4880, "danh_gia": 1480, "brand": "Barona", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.3033, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "[Combo NƯỚNG NGON] Tặng 01 bò sốt vang và hộp nhựa cao cấp 2L", "gia": 160000, "ds": 86935000, "sl": 5400, "luot_ban": 6000, "danh_gia": 1620, "brand": "O'food", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.27, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Sốt me chua ngọt Dh Foods gia vị chấm, chế biến hải sản, các món nướng lọ 200gr", "gia": 25152, "ds": 86424956, "sl": 346, "luot_ban": 7469, "danh_gia": 1372, "brand": "Dh Foods", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.1837, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Bộ 3 Tân Binh Canh ăn liền Sấy Thăng Hoa: Canh Gà Lá Giang, Canh Rau Tập Tàng, Canh Măng Chua", "gia": 184000, "ds": 85744000, "sl": 4660, "luot_ban": 4660, "danh_gia": 640, "brand": "I-soup", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.1373, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": false}, {"sp": "Mì Ý Spaghetti Ottogi 500g", "gia": 40420, "ds": 85560250, "sl": 218, "luot_ban": 5257, "danh_gia": 9910, "brand": "Ottogi", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 1.8851, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": false}, {"sp": "Thùng 6 chai nước mắm nhỉ cá cơm ruột đỏ Làng Chài Xưa 525ml/chai cá ngon vùng nước trồi 300 năm truyền thống", "gia": 228000, "ds": 8554500096, "sl": 3580, "luot_ban": 7520, "danh_gia": 2520, "brand": "Làng Chài Xưa", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.3351, "category": "Nước mắm & Mắm", "co_hoi": true}, {"sp": "Sốt bò kho, bò sốt vang O'food gói 50g", "gia": 11000, "ds": 8545950017, "sl": 7764, "luot_ban": 16272, "danh_gia": 2717, "brand": "O'food", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.167, "category": "Sốt & Gia vị pha sẵn", "co_hoi": true}, {"sp": "Xốt Muối Kim Chi Barona 180g ướp ngon chuẩn vị không cần nêm nếm, Mua 3 tặng 1 gói", "gia": 111000, "ds": 85359000, "sl": 7690, "luot_ban": 1002, "danh_gia": 1900, "brand": "Barona", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.8962, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Combo 2 Nước Mắm Cá Cơm Thuận Phát 30 độ đạm 610ml", "gia": 102000, "ds": 85162400, "sl": 8180, "luot_ban": 1052, "danh_gia": 2140, "brand": "THUẬN PHÁT", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 2.0342, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Sa tế tôm Cholimex hũ pet 450g", "gia": 33300, "ds": 83971600, "sl": 2362, "luot_ban": 2724, "danh_gia": 2090, "brand": "Cholimex", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.7673, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Thùng 6 Hộp Tương Ớt Gói Ông Chà Và 10gr (720 gói/thùng) Tiện Lợi Siêu Tiết Kiệm Cho Quán Ăn Và Nhà Hàng", "gia": 322000, "ds": 82800000, "sl": 2340, "luot_ban": 4820, "danh_gia": 980, "brand": "ÔngChàVà", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.2033, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Nước mắm nhỉ 40 độ đạm Làng Chài Xưa nhãn vàng chai thủy tinh 500ml ủ chượp 2 lần không chất bảo quản", "gia": 93000, "ds": 82663000, "sl": 8710, "luot_ban": 1347, "danh_gia": 2990, "brand": "Làng Chài Xưa", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 2.2197, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Mì Bò Hầm Ottogi 8 gói", "gia": 72192, "ds": 82108200, "sl": 118, "luot_ban": 4732, "danh_gia": 1014, "brand": "Ottogi", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 0.2143, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": false}, {"sp": "Dầu hào Lee Kum Kee Premium Brand Oyster Sauce (510g/chai) loại đặc biệt với chiết xuất hàu lên đến 40%", "gia": 108800, "ds": 82066200, "sl": 7230, "luot_ban": 1032, "danh_gia": 1930, "brand": "Lee Kum Kee", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.8702, "category": "Nước tương & Dầu hào", "co_hoi": false}, {"sp": "Cá ngừ ngâm dầu Seaspimex 185g", "gia": 28000, "ds": 81477200, "sl": 2911, "luot_ban": 3598, "danh_gia": 1650, "brand": "Seaspimex Since 1993", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.4586, "category": "Khác", "co_hoi": false}, {"sp": "Nước mắm cá cơm Thuận Phát 40 độ đạm 610ml - Từ nước cốt nhĩ cá cơm Phú Quốc", "gia": 66000, "ds": 79988454, "sl": 1178, "luot_ban": 1479, "danh_gia": 3360, "brand": "THUẬN PHÁT", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 2.2718, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Combo Mì Ý 500g & Sốt Spaghetti Ottogi 220g", "gia": 69466, "ds": 7934723615, "sl": 116, "luot_ban": 3479, "danh_gia": 9110, "brand": "Ottogi", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 2.6186, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Xốt Muối Kim Chi Hàn Quốc Barona 180g, Combo 3 gói Tặng 1 Hũ Thủy Tinh Cao Cấp (1 lít)", "gia": 95460, "ds": 78920540, "sl": 7960, "luot_ban": 1968, "danh_gia": 5200, "brand": "Barona", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 2.6423, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Sa tế sò điệp Thích Cay 150g dùng trộn mì, hủ tiếu, phở", "gia": 59000, "ds": 7846800079, "sl": 1258, "luot_ban": 2037, "danh_gia": 5260, "brand": "THÍCH CAY", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 2.5822, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Nước chấm đỏ Thích Cay, tương chấm thịt nướng, đồ nướng, chấm ăn lẩu, nước chấm ớt hiểm cay", "gia": 59000, "ds": 77944500, "sl": 1348, "luot_ban": 8489, "danh_gia": 2256, "brand": "THÍCH CAY", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 0.2658, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": false}, {"sp": "Tương ăn phở Lee Kum Kee Hoisin Sauce 567g (Nhập khẩu từ Mỹ)", "gia": 116800, "ds": 76475800, "sl": 6160, "luot_ban": 1019, "danh_gia": 1680, "brand": "Lee Kum Kee", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.6487, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": false}, {"sp": "[Tặng 1 hộp nhựa cao cấp 2L] Combo 5 sốt muối kim chi và 1 sốt chấm thịt nướng O'food", "gia": 185000, "ds": 76347000, "sl": 4040, "luot_ban": 4160, "danh_gia": 1400, "brand": "O'food", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.3365, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Rau tiến vua khô tiện lợi, dai giòn, thanh mát 80g - 250g dùng trộn gỏi, nhúng lẩu", "gia": 55000, "ds": 75269000, "sl": 1111, "luot_ban": 1503, "danh_gia": 2690, "brand": "THÍCH CAY", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.7898, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": false}, {"sp": "Xốt ướp xá xíu Cholimex - Gói 70g tiện lợi", "gia": 6750, "ds": 72960000, "sl": 9743, "luot_ban": 13279, "danh_gia": 4910, "brand": "Cholimex", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.3698, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Hộp quà gia vị Dh Foods (có thể đóng theo yêu cầu riêng) làm quà biếu, tặng người thân, bạn bè", "gia": 172000, "ds": 7225848814, "sl": 3950, "luot_ban": 8840, "danh_gia": 1580, "brand": "Dh Foods", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.1787, "category": "Muối & Bột gia vị", "co_hoi": true}, {"sp": "Gia Vị Bò Kho Barona 80g ướp ngon chuẩn vị không cần nêm nếm", "gia": 12800, "ds": 70913156, "sl": 5811, "luot_ban": 16421, "danh_gia": 1344, "brand": "Barona", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.0818, "category": "Muối & Bột gia vị", "co_hoi": false}, {"sp": "Thùng Mì Mini Tương Đen Bắc Kinh Ottogi 83g", "gia": 228000, "ds": 70410000, "sl": 3070, "luot_ban": 5070, "danh_gia": 1210, "brand": "Ottogi", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.2387, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": false}, {"sp": "Cá ngừ ngâm dầu hộp lớn 1,8kg", "gia": 250000, "ds": 70000000, "sl": 2800, "luot_ban": 4310, "danh_gia": 290, "brand": "Seaspimex Since 1993", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.0673, "category": "Khác", "co_hoi": false}, {"sp": "Xốt Bún Bò Cholimex - Gói 90g tiện lợi", "gia": 9450, "ds": 69766200, "sl": 6647, "luot_ban": 9545, "danh_gia": 3330, "brand": "Cholimex", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.3489, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Combo 2 Chai Dầu Ăn Hướng Dương Organic Nhập Khẩu Nga Vipep Chai 1L - Gia vị Vipep", "gia": 215200, "ds": 68505900, "sl": 4670, "luot_ban": 9360, "danh_gia": 1830, "brand": "Vipep", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.1955, "category": "Muối & Bột gia vị", "co_hoi": false}, {"sp": "Ớt khô sa tế Cholimex hũ TT 100g", "gia": 16200, "ds": 68479200295, "sl": 39083, "luot_ban": 5393, "danh_gia": 5640, "brand": "Cholimex", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 1.0458, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Xốt teriyaki Ottogi 2.25kg", "gia": 172302, "ds": 68374581, "sl": 4040, "luot_ban": 1437, "danh_gia": 2150, "brand": "Ottogi", "phan_khuc": "Cao (>150k)", "ti_le_dg": 1.4962, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Nước tương đậu nành thượng hạng Lee Kum Kee Selected Light Soy Sauce 1,75L", "gia": 107100, "ds": 68007000, "sl": 6380, "luot_ban": 1019, "danh_gia": 1340, "brand": "Lee Kum Kee", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.315, "category": "Nước tương & Dầu hào", "co_hoi": false}, {"sp": "Nước Tương Cao Cấp Shiitake Làng Chài Xưa Độ Đạm Tự Nhiên Lên Men Từ Nấm Ngọt Nhât Và Đậu Nành 250ml/chai", "gia": 79000, "ds": 67295800, "sl": 7960, "luot_ban": 1718, "danh_gia": 3010, "brand": "Làng Chài Xưa", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.752, "category": "Nước tương & Dầu hào", "co_hoi": false}, {"sp": "Gia vị nấu bún bò huế Natural DH Foods nêm sẵn thành phần tự nhiên gói 25gr - DHGVT92", "gia": 16096, "ds": 67199272, "sl": 4463, "luot_ban": 9878, "danh_gia": 6730, "brand": "Dh Foods", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.6813, "category": "Muối & Bột gia vị", "co_hoi": false}, {"sp": "[ Cốt nhỉ đặc biệt - 30 độ đạm ] Thùng 6 chai nước mắm nhỉ Làng Chài Xưa Nhãn Đỏ 500ml/chai truyền thống vị gu ông bà", "gia": 410000, "ds": 66006000, "sl": 1680, "luot_ban": 4870, "danh_gia": 1590, "brand": "Làng Chài Xưa", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.3265, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Combo 6 canh ăn liền I.SOUP Hot: 2 Canh Riêu Tôm, 2 Canh Cải Chua, 2 Canh Cải Xoong", "gia": 388000, "ds": 65960000, "sl": 1700, "luot_ban": 1700, "danh_gia": 230, "brand": "I-soup", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.1353, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": false}, {"sp": "Xì dầu đặc biệt Lee Kum Kee Premium Dark Soy Sauce 500ml", "gia": 54400, "ds": 65788500, "sl": 117, "luot_ban": 1888, "danh_gia": 3900, "brand": "Lee Kum Kee", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 2.0657, "category": "Nước tương & Dầu hào", "co_hoi": false}, {"sp": "COMBO 20 GÓI Sốt muối kim chi O'food gói 180g, chuẩn vị Hàn Quốc", "gia": 560000, "ds": 64432000, "sl": 1150, "luot_ban": 1830, "danh_gia": 480, "brand": "O'food", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.2623, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Bộ 3 canh chua: Canh Chua Chay, Canh Măng Chua Nấm Hương, Canh Gà Lá Giang", "gia": 184000, "ds": 63112000, "sl": 3430, "luot_ban": 3430, "danh_gia": 510, "brand": "I-soup", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.1487, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": false}, {"sp": "Sốt mì thuyền boat noodles Thích Cay 250ml, nước trộn đậm đà, chuẩn vị Thái", "gia": 79000, "ds": 62681990, "sl": 7940, "luot_ban": 7940, "danh_gia": 1610, "brand": "THÍCH CAY", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 0.2028, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Bột sả nguyên chất Natural DH Foods chế biến thực phẩm 30gr - DHGVT56", "gia": 17292, "ds": 6265821629, "sl": 4161, "luot_ban": 9169, "danh_gia": 1866, "brand": "Dh Foods", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.2035, "category": "Muối & Bột gia vị", "co_hoi": true}, {"sp": "Hộp Quà Đậm Đà Tình Thân GỒM 1 Nước Mắm Tĩn Tôm Biển 60N 500ml Và 1 Tĩn Cá Cơm Ruột Đỏ 250 ml không chất bảo quản", "gia": 680000, "ds": 62040000, "sl": 900, "luot_ban": 1470, "danh_gia": 250, "brand": "Nước Mắm Tĩn", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.1701, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Combo Tiện Lợi - Sa tế sò điệp 250g, Kho quẹt tôm thịt 250g", "gia": 149000, "ds": 61936100, "sl": 3970, "luot_ban": 1179, "danh_gia": 3140, "brand": "Unknown", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 2.6633, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Xốt mì Spaghetti vị cà chua Ottogi gói 110g", "gia": 12200, "ds": 61653900, "sl": 4761, "luot_ban": 7873, "danh_gia": 7240, "brand": "Ottogi", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.9196, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Nước mắm cá cơm Thuận Phát 60 độ đạm 490ml", "gia": 110000, "ds": 60367867, "sl": 5420, "luot_ban": 7980, "danh_gia": 1940, "brand": "THUẬN PHÁT", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 0.2431, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "[Combo 3 chai] Nước mắm nhỉ Làng Chài Xưa nhãn xanh xuất khẩu, nhãn đỏ đậm đà, nhãn vàng sánh đặc 500ml/chai thủy tinh", "gia": 169000, "ds": 59503000, "sl": 3310, "luot_ban": 4950, "danh_gia": 1490, "brand": "Làng Chài Xưa", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.301, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Xốt gà chiên nước mắm Cholimex - gói 90g tiện lợi.", "gia": 7380, "ds": 59318390, "sl": 7307, "luot_ban": 734, "danh_gia": 9230, "brand": "Cholimex", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 12.5749, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Sốt Ướp Chấm Dh Foods - Sốt Me Chua Ngọt, Ướp BBQ, Tiêu Đen, Thịt Nướng Mật Ong, Bít Tết Tiêu Chín, Bít Tết Trứng Muối", "gia": 25000, "ds": 59018100, "sl": 178, "luot_ban": 1924, "danh_gia": 2070, "brand": "Dh Foods", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 1.0759, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Gia vị ướp thịt nướng Natural DH Foods nêm sẵn thành phần tự nhiên gói 10gr - DHGVT88", "gia": 8678, "ds": 59007218, "sl": 6933, "luot_ban": 1787, "danh_gia": 1661, "brand": "Dh Foods", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.9295, "category": "Muối & Bột gia vị", "co_hoi": false}, {"sp": "Mì trộn xốt tương đen Jin Jjajang Ramen Ottogi gói 135g(MÌ XỐT TƯƠNG ĐEN (VN) 135g)", "gia": 18900, "ds": 59004050, "sl": 3256, "luot_ban": 11932, "danh_gia": 10, "brand": "Ottogi", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.0008, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Tỏi Bột Tự Nhiên Vipep Hũ Nhựa 600g - Gia vị Vipep", "gia": 151000, "ds": 58998880, "sl": 5320, "luot_ban": 1089, "danh_gia": 1780, "brand": "Vipep", "phan_khuc": "Cao (>150k)", "ti_le_dg": 1.6345, "category": "Muối & Bột gia vị", "co_hoi": false}, {"sp": "Gia vị tần hầm lẩu (tiềm) Natural DH Foods nêm sẵn thành phần tự nhiên gói 53gr - DHGVT98", "gia": 33753, "ds": 58583968, "sl": 2211, "luot_ban": 4209, "danh_gia": 3340, "brand": "Dh Foods", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.7935, "category": "Muối & Bột gia vị", "co_hoi": false}, {"sp": "Combo 3 Gói Nước Dùng Lẩu Thái Barona 180g, tặng tiêu hạt", "gia": 99351, "ds": 58299852, "sl": 6050, "luot_ban": 8310, "danh_gia": 1270, "brand": "Barona", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 0.1528, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": false}, {"sp": "Sốt me chua cay Thích cay, xào cút lộn, ốc, hải sản 250ml", "gia": 68000, "ds": 58083600, "sl": 7550, "luot_ban": 1417, "danh_gia": 3120, "brand": "Unknown", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 2.2018, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "[Mua 3 được 6] Mua 3 chai nước tương shiitake tặng 3 chai nước mắm chay shiitake chai nhựa cao cấp 525ml Làng Chài Xưa", "gia": 358000, "ds": 57594000, "sl": 1600, "luot_ban": 4030, "danh_gia": 1030, "brand": "Làng Chài Xưa", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.2556, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Combo 3 hũ sốt trứng muối hoàng kim Thích Cay 150g dùng cho các món ốc, hải sản", "gia": 179000, "ds": 56926000, "sl": 3180, "luot_ban": 3180, "danh_gia": 510, "brand": "THÍCH CAY", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.1604, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Sốt gỏi cay tiện lợi Thích Cay 120ml dùng trộn gỏi, salad chỉ trong 5 phút", "gia": 49000, "ds": 56282800, "sl": 115, "luot_ban": 1659, "danh_gia": 4030, "brand": "THÍCH CAY", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 2.4292, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Xốt mayonnaise Ottogi 3KG", "gia": 255110, "ds": 56176000, "sl": 2400, "luot_ban": 4450, "danh_gia": 770, "brand": "Ottogi", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.173, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Xốt Muối Kim Chi Hàn Quốc Barona 2 gói x 180g (tặng hũ thủy tinh cao cấp)", "gia": 73000, "ds": 5603200014, "sl": 7680, "luot_ban": 6582, "danh_gia": 2141, "brand": "Barona", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 0.3253, "category": "Sốt & Gia vị pha sẵn", "co_hoi": true}, {"sp": "Nước Dùng Lẩu Riêu Cua Barona 230g tươi ngon chuẩn vị không cần nêm nếm", "gia": 37905, "ds": 55386825, "sl": 1463, "luot_ban": 5676, "danh_gia": 7430, "brand": "Barona", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 1.309, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": false}, {"sp": "Mì Tương Đen Bắc Kinh Ottogi (5 Gói)", "gia": 64500, "ds": 54712080, "sl": 9830, "luot_ban": 3215, "danh_gia": 7390, "brand": "Ottogi", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 2.2986, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": false}, {"sp": "Sốt XO Lee Kum Kee 220g", "gia": 368000, "ds": 54680000, "sl": 1370, "luot_ban": 2200, "danh_gia": 280, "brand": "Lee Kum Kee", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.1273, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Muối ớt đỏ chanh tắc cao cấp Làng Chài Xưa, nguyên liệu tươi, thơm ngon đặc biệt, chai thủy tinh 300gr", "gia": 63000, "ds": 54273900, "sl": 8600, "luot_ban": 1504, "danh_gia": 3070, "brand": "Làng Chài Xưa", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 2.0412, "category": "Muối & Bột gia vị", "co_hoi": false}, {"sp": "[Combo 20 gói] Sốt ướp thịt Hàn Quốc OFood gói 80g, giúp thị mềm, ngọt, thơm dậy vị dùng cho 400g thịt", "gia": 220000, "ds": 54032000, "sl": 3210, "luot_ban": 7320, "danh_gia": 1620, "brand": "O'food", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.2213, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "[COMBO 4 CHAI] Mắm nêm pha sẵn cao cấp Làng Chài Xưa, nguyên liệu tươi, thơm ngon đặc biệt, chai thủy tinh 300g", "gia": 238000, "ds": 53990000, "sl": 2250, "luot_ban": 2600, "danh_gia": 660, "brand": "Làng Chài Xưa", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.2538, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Viên Gia Vị Phở Bò Ông Chà Và Gold 126g (Beef Pho Broth Cubes)", "gia": 19000, "ds": 53778000, "sl": 3152, "luot_ban": 5929, "danh_gia": 5290, "brand": "Ông Chà Và", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.8922, "category": "Muối & Bột gia vị", "co_hoi": false}, {"sp": "Lốc 10 Chai Nước Mắm Tĩn Mini Du Lịch 40N 60ml/chai Rin Nguyên Chất Truyền Thống", "gia": 250000, "ds": 53584000, "sl": 2160, "luot_ban": 3590, "danh_gia": 850, "brand": "Nước Mắm Tĩn", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.2368, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Mì Tương Đen Bắc Kinh Ottogi 83g", "gia": 7600, "ds": 53459000, "sl": 6851, "luot_ban": 14696, "danh_gia": 1483, "brand": "Ottogi", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.1009, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": false}, {"sp": "Thùng Mì Jin Cay 120gx20", "gia": 255000, "ds": 53344000, "sl": 2140, "luot_ban": 4400, "danh_gia": 1140, "brand": "Ottogi", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.2591, "category": "Gia vị nấu & Mì ăn liền", "co_hoi": false}, {"sp": "Gia Vị Bún Bò Huế Barona 110g, Mua 3 gói Tặng 1 gói Gia Vị Hủ Tiếu Hoàn Chỉnh Barona 110g", "gia": 54000, "ds": 52743600, "sl": 1067, "luot_ban": 2915, "danh_gia": 5800, "brand": "Barona", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 1.9897, "category": "Muối & Bột gia vị", "co_hoi": false}, {"sp": "Muối ớt chanh Nha Trang DH Foods gia vị nước sốt chấm hải sản đồ nướng 120/200gr - DHSCH05", "gia": 19505, "ds": 51841235, "sl": 3215, "luot_ban": 8303, "danh_gia": 1438, "brand": "Dh Foods", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.1732, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Nước Chấm Muối Ớt Xanh Thích Cay 250ml Nước Chấm Hải Sản Mù Tạt Sốt Chấm Lẩu Cay Nồng", "gia": 59000, "ds": 51727010, "sl": 8800, "luot_ban": 4309, "danh_gia": 1154, "brand": "Unknown", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 0.2678, "category": "Sốt & Gia vị pha sẵn", "co_hoi": false}, {"sp": "Nước Mắm Thuận Phát Cá Cơm Than 740ml - Với 16 dưỡng chất", "gia": 36000, "ds": 51024151, "sl": 1307, "luot_ban": 1956, "danh_gia": 2420, "brand": "THUẬN PHÁT", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 1.2372, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Combo 4 Loại Natural Gia Vị Nấu Phở, Bún Dh Foods - Gia Vị Hoàn Chỉnh Nấu Bún, Phở Bò, Phở Gà Có Kèm Túi Lọc", "gia": 16000, "ds": 50700500, "sl": 1407, "luot_ban": 1488, "danh_gia": 870, "brand": "Dh Foods", "phan_khuc": "Rẻ (<50k)", "ti_le_dg": 0.5847, "category": "Muối & Bột gia vị", "co_hoi": false}, {"sp": "[01 Chai Cá vàng - 60N - 500ml] Nước Mắm Tĩn Cá Cơm Ruột Đỏ Chai Thuỷ Tinh Nước Mắm Truyền Thống Sạch", "gia": 218000, "ds": 5035400015, "sl": 2290, "luot_ban": 4340, "danh_gia": 870, "brand": "Nước Mắm Tĩn", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.2005, "category": "Nước mắm & Mắm", "co_hoi": true}, {"sp": "01 BÌNH GỐM 60 ĐẠM Nước mắm Tĩn cá cơm ruột đỏ độ đạm 60N 250 ml rin nguyên chất truyền thống không chất bảo quản", "gia": 248000, "ds": 49976000, "sl": 2000, "luot_ban": 4440, "danh_gia": 830, "brand": "Nước Mắm Tĩn", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.1869, "category": "Nước mắm & Mắm", "co_hoi": false}, {"sp": "Bột tương đen Ottogi 1kg VN", "gia": 185000, "ds": 49920500, "sl": 2620, "luot_ban": 3410, "danh_gia": 640, "brand": "Ottogi", "phan_khuc": "Cao (>150k)", "ti_le_dg": 0.1877, "category": "Muối & Bột gia vị", "co_hoi": false}, {"sp": "Bánh phồng tôm Ấn Độ Pani Puri 100g hình quả bóng tròn, chiên giòn rụm, phồng to, thơm đặc biệt", "gia": 79500, "ds": 49917000, "sl": 6220, "luot_ban": 6220, "danh_gia": 870, "brand": "THÍCH CAY", "phan_khuc": "Trung (50-150k)", "ti_le_dg": 0.1399, "category": "Khác", "co_hoi": false}], "brand_summary": [{"brand": "Cholimex", "sku": 16, "ds": 158750968576, "luot_ban": 114014, "ds_tb": 9921935536, "gia_tb": 33454, "pct": 62.32}, {"brand": "Làng Chài Xưa", "sku": 26, "ds": 22774403775, "luot_ban": 127416, "ds_tb": 875938607, "gia_tb": 173865, "pct": 8.94}, {"brand": "Dh Foods", "sku": 21, "ds": 15553732479, "luot_ban": 185252, "ds_tb": 740653928, "gia_tb": 29601, "pct": 6.11}, {"brand": "O'food", "sku": 21, "ds": 14008427753, "luot_ban": 259531, "ds_tb": 667067988, "gia_tb": 105505, "pct": 5.5}, {"brand": "THÍCH CAY", "sku": 25, "ds": 12382459917, "luot_ban": 180867, "ds_tb": 495298397, "gia_tb": 90736, "pct": 4.86}, {"brand": "Ottogi", "sku": 21, "ds": 10759027724, "luot_ban": 144936, "ds_tb": 512334654, "gia_tb": 99314, "pct": 4.22}, {"brand": "Nước Mắm Tĩn", "sku": 17, "ds": 8361151015, "luot_ban": 58738, "ds_tb": 491832413, "gia_tb": 437706, "pct": 3.28}, {"brand": "Barona", "sku": 14, "ds": 6836084778, "luot_ban": 78340, "ds_tb": 488291770, "gia_tb": 119456, "pct": 2.68}, {"brand": "THUẬN PHÁT", "sku": 8, "ds": 1257565414, "luot_ban": 26735, "ds_tb": 157195677, "gia_tb": 94500, "pct": 0.49}, {"brand": "I-soup", "sku": 6, "ds": 1065607000, "luot_ban": 35186, "ds_tb": 177601167, "gia_tb": 156667, "pct": 0.42}, {"brand": "Vipep", "sku": 6, "ds": 927764900, "luot_ban": 98243, "ds_tb": 154627483, "gia_tb": 86867, "pct": 0.36}, {"brand": "Lee Kum Kee", "sku": 9, "ds": 894672300, "luot_ban": 14335, "ds_tb": 99408033, "gia_tb": 149811, "pct": 0.35}, {"brand": "Unknown", "sku": 4, "ds": 619213030, "luot_ban": 8919, "ds_tb": 154803258, "gia_tb": 133250, "pct": 0.24}, {"brand": "TINH NGUYÊN", "sku": 1, "ds": 156049400, "luot_ban": 4231, "ds_tb": 156049400, "gia_tb": 47111, "pct": 0.06}, {"brand": "Seaspimex Since 1993", "sku": 2, "ds": 151477200, "luot_ban": 7908, "ds_tb": 75738600, "gia_tb": 139000, "pct": 0.06}, {"brand": "I-Ya.ua", "sku": 1, "ds": 99892000, "luot_ban": 3487, "ds_tb": 99892000, "gia_tb": 68000, "pct": 0.04}, {"brand": "ÔngChàVà", "sku": 1, "ds": 82800000, "luot_ban": 4820, "ds_tb": 82800000, "gia_tb": 322000, "pct": 0.03}, {"brand": "Ông Chà Và", "sku": 1, "ds": 53778000, "luot_ban": 5929, "ds_tb": 53778000, "gia_tb": 19000, "pct": 0.02}], "price_seg": [{"phan_khuc": "Rẻ (<50k)", "so_sp": 67, "ds": 180175899335, "luot_ban": 700607, "pct": 70.73}, {"phan_khuc": "Trung (50-150k)", "so_sp": 75, "ds": 45475686012, "luot_ban": 419573, "pct": 17.85}, {"phan_khuc": "Cao (>150k)", "so_sp": 58, "ds": 29083489914, "luot_ban": 238707, "pct": 11.42}], "category": [{"category": "Sốt & Gia vị pha sẵn", "so_sp": 77, "ds": 112301870464, "gia_tb": 91562, "pct": 44.09}, {"category": "Nước tương & Dầu hào", "so_sp": 9, "ds": 89127437141, "gia_tb": 81478, "pct": 34.99}, {"category": "Nước mắm & Mắm", "so_sp": 50, "ds": 32320770704, "gia_tb": 270208, "pct": 12.69}, {"category": "Muối & Bột gia vị", "so_sp": 23, "ds": 15823476212, "gia_tb": 53463, "pct": 6.21}, {"category": "Gia vị nấu & Mì ăn liền", "so_sp": 27, "ds": 2914378800, "gia_tb": 88717, "pct": 1.14}, {"category": "Khác", "so_sp": 14, "ds": 2247141940, "gia_tb": 91001, "pct": 0.88}], "top10": [{"sp": "Nước tương Hương Việt Hảo Vị 7ml (01 túi gồm 50 gói tiện lợi sử dụng)", "brand": "Cholimex", "gia": 20700, "ds": 88398200541, "sl": 38455, "danh_gia": 3160, "phan_khuc": "Rẻ (<50k)"}, {"sp": "Ớt khô sa tế Cholimex hũ TT 100g", "brand": "Cholimex", "gia": 16200, "ds": 68479200295, "sl": 39083, "danh_gia": 5640, "phan_khuc": "Rẻ (<50k)"}, {"sp": "[Combo 3 Chai] Nước Mắm Nhỉ Làng Chài Xưa Cá Cơm Than, Tôm Biển, Cá Cơm Ruột Đỏ 525ml/chai nhựa cao cấp, tiết kiệm", "brand": "Làng Chài Xưa", "gia": 119000, "ds": 9571160079, "sl": 7440, "danh_gia": 4310, "phan_khuc": "Trung (50-150k)"}, {"sp": "Thùng 6 chai nước mắm nhỉ cá cơm ruột đỏ Làng Chài Xưa 525ml/chai cá ngon vùng nước trồi 300 năm truyền thống", "brand": "Làng Chài Xưa", "gia": 228000, "ds": 8554500096, "sl": 3580, "danh_gia": 2520, "phan_khuc": "Cao (>150k)"}, {"sp": "Sốt bò kho, bò sốt vang O'food gói 50g", "brand": "O'food", "gia": 11000, "ds": 8545950017, "sl": 7764, "danh_gia": 2717, "phan_khuc": "Rẻ (<50k)"}, {"sp": "Combo Mì Ý 500g & Sốt Spaghetti Ottogi 220g", "brand": "Ottogi", "gia": 69466, "ds": 7934723615, "sl": 116, "danh_gia": 9110, "phan_khuc": "Trung (50-150k)"}, {"sp": "Sa tế sò điệp Thích Cay 150g dùng trộn mì, hủ tiếu, phở", "brand": "THÍCH CAY", "gia": 59000, "ds": 7846800079, "sl": 1258, "danh_gia": 5260, "phan_khuc": "Trung (50-150k)"}, {"sp": "Hộp quà gia vị Dh Foods (có thể đóng theo yêu cầu riêng) làm quà biếu, tặng người thân, bạn bè", "brand": "Dh Foods", "gia": 172000, "ds": 7225848814, "sl": 3950, "danh_gia": 1580, "phan_khuc": "Cao (>150k)"}, {"sp": "Bột sả nguyên chất Natural DH Foods chế biến thực phẩm 30gr - DHGVT56", "brand": "Dh Foods", "gia": 17292, "ds": 6265821629, "sl": 4161, "danh_gia": 1866, "phan_khuc": "Rẻ (<50k)"}, {"sp": "Xốt Muối Kim Chi Hàn Quốc Barona 2 gói x 180g (tặng hũ thủy tinh cao cấp)", "brand": "Barona", "gia": 73000, "ds": 5603200014, "sl": 7680, "danh_gia": 2141, "phan_khuc": "Trung (50-150k)"}], "white_space": [{"sp": "Thùng 6 chai nước mắm nhỉ cá cơm ruột đỏ Làng Chài Xưa 525ml/chai cá ngon vùng nước trồi 300 năm truyền thống", "brand": "Làng Chài Xưa", "gia": 228000, "ds": 8554500096, "ti_le_dg": 0.3351, "category": "Nước mắm & Mắm"}, {"sp": "Sốt bò kho, bò sốt vang O'food gói 50g", "brand": "O'food", "gia": 11000, "ds": 8545950017, "ti_le_dg": 0.167, "category": "Sốt & Gia vị pha sẵn"}, {"sp": "Hộp quà gia vị Dh Foods (có thể đóng theo yêu cầu riêng) làm quà biếu, tặng người thân, bạn bè", "brand": "Dh Foods", "gia": 172000, "ds": 7225848814, "ti_le_dg": 0.1787, "category": "Muối & Bột gia vị"}, {"sp": "Bột sả nguyên chất Natural DH Foods chế biến thực phẩm 30gr - DHGVT56", "brand": "Dh Foods", "gia": 17292, "ds": 6265821629, "ti_le_dg": 0.2035, "category": "Muối & Bột gia vị"}, {"sp": "Xốt Muối Kim Chi Hàn Quốc Barona 2 gói x 180g (tặng hũ thủy tinh cao cấp)", "brand": "Barona", "gia": 73000, "ds": 5603200014, "ti_le_dg": 0.3253, "category": "Sốt & Gia vị pha sẵn"}, {"sp": "[01 Chai Cá vàng - 60N - 500ml] Nước Mắm Tĩn Cá Cơm Ruột Đỏ Chai Thuỷ Tinh Nước Mắm Truyền Thống Sạch", "brand": "Nước Mắm Tĩn", "gia": 218000, "ds": 5035400015, "ti_le_dg": 0.2005, "category": "Nước mắm & Mắm"}, {"sp": "[Tặng hộp hoặc sốt] Combo 3 gói sốt muối kim chi O'food 180g / gói", "brand": "O'food", "gia": 91100, "ds": 2383563000, "ti_le_dg": 0.2303, "category": "Sốt & Gia vị pha sẵn"}, {"sp": "Sa Tế Sò Điệp Thích Cay Sốt Trộn Mì, Hủ Tiếu, Phở Sốt Chấm Cá Viên Chiên Sốt Ướp Thịt", "brand": "THÍCH CAY", "gia": 59000, "ds": 812970720, "ti_le_dg": 0.2213, "category": "Sốt & Gia vị pha sẵn"}, {"sp": "Mắm nêm pha sẵn cao cấp Làng Chài Xưa, nguyên liệu tươi, thơm ngon đặc biệt, chai thủy tinh 300g", "brand": "Làng Chài Xưa", "gia": 63000, "ds": 638419100, "ti_le_dg": 0.1658, "category": "Nước mắm & Mắm"}, {"sp": "Canh Kim Chi Thịt Gà Ăn Liền I-Soup 66g", "brand": "I-soup", "gia": 68000, "ds": 466309000, "ti_le_dg": 0.0182, "category": "Gia vị nấu & Mì ăn liền"}, {"sp": "Combo 3 gói sốt muối kim chi cay dịu O'food 180g / gói tặng 1 hộp nhựa cao cấp 2L hoặc 1 gói sốt muối kim chi cùng loại", "brand": "O'food", "gia": 96000, "ds": 460881000, "ti_le_dg": 0.2247, "category": "Sốt & Gia vị pha sẵn"}, {"sp": "Sốt Trứng Muối hoàng kim Thích Cay 150g đa dụng cho các món ốc, hải sản, mì ý", "brand": "THÍCH CAY", "gia": 55000, "ds": 439050800, "ti_le_dg": 0.0147, "category": "Sốt & Gia vị pha sẵn"}, {"sp": "[Chai 2 lít - Tiết kiệm] Nước Chấm Cá Cơm Than Làng Chài Xưa chai nhựa cao cấp 2 lít/chai Đặc Biệt Thanh Dịu An toàn", "brand": "Làng Chài Xưa", "gia": 71500, "ds": 432792200, "ti_le_dg": 0.2771, "category": "Khác"}, {"sp": "Combo 2 nước mắm cá cơm Thuận Phát 40 độ đạm 610ml - Từ nước cốt nhĩ cá cơm Phú Quốc", "brand": "THUẬN PHÁT", "gia": 129000, "ds": 408182084, "ti_le_dg": 0.2908, "category": "Nước mắm & Mắm"}, {"sp": "Tương ớt gói Cholimex 10g siêu tiện lợi (01 túi gồm 50 gói)", "brand": "Cholimex", "gia": 27900, "ds": 406509200, "ti_le_dg": 0.0706, "category": "Sốt & Gia vị pha sẵn"}, {"sp": "Combo 2 sốt muối kim chi O'food 180g/gói", "brand": "O'food", "gia": 60000, "ds": 358654800, "ti_le_dg": 0.2139, "category": "Sốt & Gia vị pha sẵn"}, {"sp": "[Thùng 6 chai nước mắm ngon] Nước Mắm Tĩn cá cơm than Nhãn Đỏ Độ Đạm 40N Thùng 6 Chai Thủy Tinh 500ml/chai", "brand": "Nước Mắm Tĩn", "gia": 990000, "ds": 297441000, "ti_le_dg": 0.2813, "category": "Nước mắm & Mắm"}, {"sp": "COMBO 2 cá vàng 60N 500ml Nước Mắm Tĩn Cá Cơm Ruột Đỏ Chai Thuỷ Tinh 500ml Nước Mắm Truyền Thống", "brand": "Nước Mắm Tĩn", "gia": 418000, "ds": 292211000, "ti_le_dg": 0.2532, "category": "Nước mắm & Mắm"}, {"sp": "Sốt muối kim chi O'food gói 180g, chuẩn vị Hàn Quốc", "brand": "O'food", "gia": 30000, "ds": 287189500, "ti_le_dg": 0.1475, "category": "Sốt & Gia vị pha sẵn"}, {"sp": "Muối hồng Himalaya Vipep nguyên hạt, xay nhuyễn 120g/200g/250g/500g/1100g - Gia vị Vipep", "brand": "Vipep", "gia": 18000, "ds": 282481350, "ti_le_dg": 0.175, "category": "Muối & Bột gia vị"}, {"sp": "Kho quẹt tôm thịt Thích Cay đóng hũ tiện lợi 250g - tôm khô, thịt ba chỉ, tóp mỡ, tiêu xanh", "brand": "THÍCH CAY", "gia": 79000, "ds": 222007490, "ti_le_dg": 0.2513, "category": "Khác"}, {"sp": "Mắm Nêm Ngon Pha Sẵn Thuận Phát 950ml", "brand": "THUẬN PHÁT", "gia": 46000, "ds": 216299000, "ti_le_dg": 0.5272, "category": "Nước mắm & Mắm"}, {"sp": "Sốt Spaghetti O'Food gói 120g", "brand": "O'food", "gia": 20000, "ds": 213304000, "ti_le_dg": 0.1256, "category": "Sốt & Gia vị pha sẵn"}, {"sp": "Combo 5 chai Nước Mắm Phú Quốc Cao Cấp Vị Xưa Barona 40 Độ Đạm 500ml [tặng 1 hũ thủy tinh cao cấp 1 lít]", "brand": "Barona", "gia": 427050, "ds": 209704000, "ti_le_dg": 0.2594, "category": "Nước mắm & Mắm"}, {"sp": "Bột Gia Vị Vipep gia vị nấu ăn hành bột, tỏi bột, ớt, ngũ vị hương, tiêu, quế, sả bột, ngò, nghệ", "brand": "Vipep", "gia": 17000, "ds": 206632080, "ti_le_dg": 0.0774, "category": "Muối & Bột gia vị"}, {"sp": "Mì Trộn Phô Mai Ottogi Mini 75g", "brand": "Ottogi", "gia": 10150, "ds": 184521200, "ti_le_dg": 0.0753, "category": "Gia vị nấu & Mì ăn liền"}, {"sp": "Gia vị nấu phở bò Hà Nội Natural DH Foods nêm sẵn thành phần tự nhiên gói 24gr - DHGVT75", "brand": "Dh Foods", "gia": 16738, "ds": 183070636, "ti_le_dg": 0.0443, "category": "Muối & Bột gia vị"}, {"sp": "Sốt gà chiên 2 vị cay và phô mai O'food gói 120g", "brand": "O'food", "gia": 19500, "ds": 178832500, "ti_le_dg": 0.1038, "category": "Sốt & Gia vị pha sẵn"}, {"sp": "Nước mắm chay 3 trong 1 Làng Chài Xưa (01 chai) 525ml trái thơm nấm ngọt đậu nành 300 năm truyền thống", "brand": "Làng Chài Xưa", "gia": 49000, "ds": 177444800, "ti_le_dg": 0.1756, "category": "Nước mắm & Mắm"}, {"sp": "Sa tế sò điệp Thích Cay 250g, trộn mì, hủ tiếu, phở, sốt cá viên chiên, dùng để ướp thịt tiện lợi ST250", "brand": "THÍCH CAY", "gia": 79000, "ds": 177173500, "ti_le_dg": 0.2136, "category": "Sốt & Gia vị pha sẵn"}, {"sp": "Bột tỏi nguyên chất Natural DH Foods chế biến thực phẩm 60gr - DHGVT58", "brand": "Dh Foods", "gia": 18863, "ds": 167786068, "ti_le_dg": 0.1791, "category": "Muối & Bột gia vị"}, {"sp": "[Thùng 6 chai] Nước mắm nhỉ 40 độ đạm Làng Chài Xưa nhãn vàng chai thủy tinh 500ml ủ chượp 2 lần đậm đà thơm ngon", "brand": "Làng Chài Xưa", "gia": 530000, "ds": 161310000, "ti_le_dg": 0.2774, "category": "Nước mắm & Mắm"}, {"sp": "Sốt lẩu hoàn chỉnh O'food gói 180g, có 7 vị", "brand": "O'food", "gia": 26000, "ds": 157026000, "ti_le_dg": 0.1016, "category": "Sốt & Gia vị pha sẵn"}, {"sp": "[COMBO 02 BÌNH GỐM 60 ĐẠM] Nước Mắm Tĩn cá cơm ruột đỏ độ đạm 60N 250ml rin nguyên chất", "brand": "Nước Mắm Tĩn", "gia": 418000, "ds": 154120000, "ti_le_dg": 0.2232, "category": "Nước mắm & Mắm"}, {"sp": "Dầu màu điều Dh Foods gia vị chế biến thực phẩm, tạo màu tự nhiên cho món ăn lọ 100ml", "brand": "Dh Foods", "gia": 27667, "ds": 152260262, "ti_le_dg": 0.1688, "category": "Muối & Bột gia vị"}, {"sp": "Thùng 6 nước mắm 60N - 500ml - Nước Mắm Tĩn Cá Cơm Ruột Đỏ Chai Thuỷ Tinh 500ml/chai Truyền Thống", "brand": "Nước Mắm Tĩn", "gia": 1258000, "ds": 149911000, "ti_le_dg": 0.2275, "category": "Nước mắm & Mắm"}, {"sp": "Bột hành nguyên chất Natural DH Foods chế biến thực phẩm 40gr - DHGVT57", "brand": "Dh Foods", "gia": 19920, "ds": 138440346, "ti_le_dg": 0.1791, "category": "Muối & Bột gia vị"}, {"sp": "COMBO 2 BÌNH Nước mắm Tôm Biển Truyền Thống 60N đạm - Nước mắm Tĩn - 500ml/bình Thơm Ngon Hảo Hạng", "brand": "Nước Mắm Tĩn", "gia": 796000, "ds": 138381000, "ti_le_dg": 0.2122, "category": "Nước mắm & Mắm"}, {"sp": "1 Bình gốm Nước mắm Tôm Biển Truyền Thống 60N đạm - Nước mắm Tĩn - 500ml Thơm Ngon Hảo Hạng Không Chất Bảo Quản", "brand": "Nước Mắm Tĩn", "gia": 436000, "ds": 134930000, "ti_le_dg": 0.1864, "category": "Nước mắm & Mắm"}, {"sp": "Gia vị nấu phở gà Natural DH Foods nêm sẵn thành phần tự nhiên gói 20gr - DHGVT77", "brand": "Dh Foods", "gia": 15632, "ds": 127303143, "ti_le_dg": 0.5245, "category": "Muối & Bột gia vị"}, {"sp": "Combo 3 Hũ Sa tế Sò Điệp Thích Cay 250g Sốt Trộn Mì Đa Dụng Sa Tế Cay Trộn Hủ Tiếu", "brand": "THÍCH CAY", "gia": 205000, "ds": 126293000, "ti_le_dg": 0.2067, "category": "Sốt & Gia vị pha sẵn"}, {"sp": "[Thùng 6 chai] Nước mắm nhỉ Làng Chài Xưa nhãn xanh xuất khẩu, nhãn đỏ đậm đà, nhãn vàng sánh đặc 500ml/chai thủy tinh", "brand": "Làng Chài Xưa", "gia": 320000, "ds": 121966000, "ti_le_dg": 0.2668, "category": "Nước mắm & Mắm"}, {"sp": "Thùng 6 chai nước mắm CHAY 3 trong 1 Làng Chài Xưa 525ml trái thơm nấm ngọt đậu nành 300 năm truyền thống", "brand": "Làng Chài Xưa", "gia": 259000, "ds": 120487000, "ti_le_dg": 0.2571, "category": "Nước mắm & Mắm"}, {"sp": "Tương ớt Cholimex chai Pet 5kg", "brand": "Cholimex", "gia": 127800, "ds": 120183000, "ti_le_dg": 0.18, "category": "Sốt & Gia vị pha sẵn"}, {"sp": "Nước mắm tôm biển Làng Chài Xưa Hồng Ngọc Đại Dương 125ml/chai", "brand": "Làng Chài Xưa", "gia": 10000, "ds": 119662000, "ti_le_dg": 0.2136, "category": "Nước mắm & Mắm"}, {"sp": "Bộ Gia Vị Tự Nhiên DH FOODS Gừng Bột, Hành Bột, Sả Bột, Tỏi Bột, Nghệ Bột, Ớt Bột, Thảo Quả, Hạt Dổi, Hạt Mắc Khén", "brand": "Dh Foods", "gia": 12000, "ds": 118060300, "ti_le_dg": 0.5896, "category": "Muối & Bột gia vị"}, {"sp": "Xốt ướp thịt nướng gói 70g", "brand": "Cholimex", "gia": 7500, "ds": 117267750, "ti_le_dg": 0.3479, "category": "Sốt & Gia vị pha sẵn"}, {"sp": "Sốt ướp thịt Hàn Quốc OFood gói 80g, giúp thị mềm, ngọt, thơm dậy vị dùng cho 400g thịt", "brand": "O'food", "gia": 11000, "ds": 116989000, "ti_le_dg": 0.138, "category": "Sốt & Gia vị pha sẵn"}]}
+</script>
+<script>
+// ============================================================
+// Dh Foods Dashboard — Core Data & State
+// ============================================================
+const dashboardDataEl = document.getElementById('dashboard-data');
+const RAW = dashboardDataEl ? JSON.parse(dashboardDataEl.textContent || '{}') : {};
+
+const COLORS = {
+  dark: '#003e2d',
+  dark2: '#002e20',
+  green: '#4CA384',
+  greenSoft: '#8BC4A8',
+  greenPale: '#B8D9C9',
+  greenFaint: '#D4EDE3',
+  tan: '#ed7401',
+  cream: '#fefce8',
+  grey: '#cfd6d0'
+};
+
+const CATEGORY_COLORS = {
+  'Sốt & Gia vị pha sẵn': '#003e2d',
+  'Nước tương & Dầu hào': '#4CA384',
+  'Nước mắm & Mắm': '#ed7401',
+  'Muối & Bột gia vị': '#8BC4A8',
+  'Gia vị nấu & Mì ăn liền': '#c97b3f',
+  'Khác': '#b8b8a8'
+};
+
+function catColor(cat){ return CATEGORY_COLORS[cat] || '#999999'; }
+
+// ---- Number formatting (Vietnamese style) ----
+function fmtVND(n){
+  if (n === null || n === undefined) return '—';
+  const abs = Math.abs(n);
+  if (abs >= 1e9) return (n/1e9).toLocaleString('vi-VN',{maximumFractionDigits:1}) + ' tỷ';
+  if (abs >= 1e6) return (n/1e6).toLocaleString('vi-VN',{maximumFractionDigits:1}) + ' tr';
+  if (abs >= 1e3) return (n/1e3).toLocaleString('vi-VN',{maximumFractionDigits:0}) + 'k';
+  return n.toLocaleString('vi-VN');
+}
+function fmtInt(n){
+  if (n === null || n === undefined) return '—';
+  return Math.round(n).toLocaleString('vi-VN');
+}
+function fmtPct(n, digits=1){
+  if (n === null || n === undefined) return '—';
+  return n.toLocaleString('vi-VN',{maximumFractionDigits:digits}) + '%';
+}
+function fmtPrice(n){
+  if (n === null || n === undefined) return '—';
+  return Math.round(n).toLocaleString('vi-VN') + 'đ';
+}
+function truncate(str, len){
+  if (!str) return '';
+  return str.length > len ? str.slice(0, len-1) + '…' : str;
+}
+
+function toggleInArray(arr, val){
+  const idx = arr.indexOf(val);
+  if (idx === -1) arr.push(val); else arr.splice(idx,1);
+  return arr;
+}
+
+// ---- Global filter state (multi-select arrays; empty array = no filter / all) ----
+const state = {
+  brand: [],
+  priceSeg: [],
+  category: [],
+  productSort: { key: 'ds', dir: 'desc' },
+  wsSort: { key: 'ds', dir: 'desc' },
+  productSearch: ''
+};
+
+// ---- Apply current filters to full_data ----
+function getFilteredData(){
+  return RAW.full_data.filter(r=>{
+    if (state.brand.length && !state.brand.includes(r.brand)) return false;
+    if (state.priceSeg.length && !state.priceSeg.includes(r.phan_khuc)) return false;
+    if (state.category.length && !state.category.includes(r.category)) return false;
+    return true;
+  });
+}
+
+function getFilteredDataExcluding(dim){
+  // For slicer counts — filter by everything except `dim` so user sees available options
+  return RAW.full_data.filter(r=>{
+    if (dim !== 'brand' && state.brand.length && !state.brand.includes(r.brand)) return false;
+    if (dim !== 'priceSeg' && state.priceSeg.length && !state.priceSeg.includes(r.phan_khuc)) return false;
+    if (dim !== 'category' && state.category.length && !state.category.includes(r.category)) return false;
+    return true;
+  });
+}
+
+// ============================================================
+// NAVIGATION (tabs + sidebar)
+// ============================================================
+function showPage(pageId){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.navitem').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+pageId).classList.add('active');
+  document.querySelectorAll(`.tab[data-page="${pageId}"]`).forEach(t=>t.classList.add('active'));
+  document.querySelectorAll(`.navitem[data-page="${pageId}"]`).forEach(n=>n.classList.add('active'));
+  renderCurrentPage(pageId);
+}
+
+document.querySelectorAll('.tab, .navitem[data-page]').forEach(el=>{
+  el.addEventListener('click', ()=> showPage(el.dataset.page));
+});
+
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  state.brand = [];
+  state.priceSeg = [];
+  state.category = [];
+  state.productSearch = '';
+  const searchInput = document.getElementById('productSearch');
+  if (searchInput) searchInput.value = '';
+  closeAllDropdowns();
+  renderAll();
+});
+
+// ============================================================
+// SLICERS (multi-select dropdowns)
+// ============================================================
+const SLICER_CONFIG = [
+  { id:'brand',    label:'Brand',         containerId:'slicerBrand',    options: ()=> RAW.brand_summary.map(b=>b.brand) },
+  { id:'priceSeg', label:'Phân khúc giá', containerId:'slicerPrice',    options: ()=> RAW.price_seg.map(p=>p.phan_khuc) },
+  { id:'category', label:'Category',      containerId:'slicerCategory', options: ()=> RAW.category.map(c=>c.category) }
+];
+
+function closeAllDropdowns(){
+  document.querySelectorAll('.slicer-dropdown').forEach(d=> d.dataset.open = 'false');
+}
+
+function renderSlicers(){
+  SLICER_CONFIG.forEach(cfg=> renderDropdownSlicer(cfg));
+
+  // Filter status text
+  const parts = [];
+  if (state.brand.length) parts.push(`Brand: ${state.brand.join(', ')}`);
+  if (state.priceSeg.length) parts.push(`Giá: ${state.priceSeg.join(', ')}`);
+  if (state.category.length) parts.push(`Category: ${state.category.join(', ')}`);
+  document.getElementById('filterStatus').textContent = parts.length ? '● ' + parts.join(' · ') : '';
+}
+
+function renderDropdownSlicer(cfg){
+  const container = document.getElementById(cfg.containerId);
+  const options = cfg.options();
+  const selected = state[cfg.id];
+  const isOpen = container.dataset.open === 'true';
+
+  const labelText = selected.length === 0
+    ? 'Tất cả'
+    : selected.length === 1
+      ? selected[0]
+      : `${selected.length} đã chọn`;
+
+  container.innerHTML = `
+    <div class="dd-toggle ${isOpen?'open':''}" data-dd="${cfg.id}">
+      <span class="dd-toggle-label">${escapeHtml(labelText)}</span>
+      <span class="dd-toggle-arrow">&#9662;</span>
+    </div>
+    <div class="dd-panel ${isOpen?'open':''}" data-dd-panel="${cfg.id}">
+      <div class="dd-panel-actions">
+        <span class="dd-action" data-act="all">Chọn tất cả</span>
+        <span class="dd-action" data-act="none">Bỏ chọn</span>
+      </div>
+      <div class="dd-options">
+        ${options.map(opt=>`
+          <label class="dd-option">
+            <input type="checkbox" value="${escapeHtml(opt)}" ${selected.includes(opt)?'checked':''}>
+            <span>${escapeHtml(opt)}</span>
+          </label>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  // Toggle open/close
+  container.querySelector('.dd-toggle').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const willOpen = container.dataset.open !== 'true';
+    document.querySelectorAll('.slicer-dropdown').forEach(d=> d.dataset.open = 'false');
+    container.dataset.open = willOpen ? 'true' : 'false';
+    renderSlicers();
+  });
+
+  // Checkbox change
+  container.querySelectorAll('.dd-option input').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      const val = cb.value;
+      const arr = state[cfg.id];
+      const idx = arr.indexOf(val);
+      if (cb.checked && idx === -1) arr.push(val);
+      if (!cb.checked && idx !== -1) arr.splice(idx,1);
+      container.dataset.open = 'true'; // keep open while picking
+      renderAll();
+    });
+  });
+
+  // Select all / none
+  container.querySelector('[data-act="all"]').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    state[cfg.id] = cfg.options().slice();
+    container.dataset.open = 'true';
+    renderAll();
+  });
+  container.querySelector('[data-act="none"]').addEventListener('click', (e)=>{
+    e.stopPropagation();
+    state[cfg.id] = [];
+    container.dataset.open = 'true';
+    renderAll();
+  });
+
+  // Prevent closing when clicking inside panel
+  container.querySelector('.dd-panel').addEventListener('click', (e)=> e.stopPropagation());
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', ()=>{
+  let needsRerender = false;
+  document.querySelectorAll('.slicer-dropdown').forEach(d=>{
+    if (d.dataset.open === 'true') needsRerender = true;
+    d.dataset.open = 'false';
+  });
+  if (needsRerender) renderSlicers();
+});
+
+// ============================================================
+// CHART INSTANCE REGISTRY (so we can destroy/recreate on filter change)
+// ============================================================
+const chartInstances = {};
+function destroyChart(id){
+  if (chartInstances[id]){ chartInstances[id].destroy(); delete chartInstances[id]; }
+}
+
+Chart.defaults.font.family = "'Segoe UI', sans-serif";
+Chart.defaults.color = '#5a6b62';
+
+// ============================================================
+// PAGE 1 — OVERVIEW
+// ============================================================
+function renderOverview(){
+  const data = getFilteredData();
+  const totalDS = data.reduce((s,r)=>s+r.ds,0);
+  const totalLuotBan = data.reduce((s,r)=>s+r.luot_ban,0);
+  const skuCount = data.length;
+  const avgDS = skuCount ? totalDS/skuCount : 0;
+
+  document.getElementById('kpiTotalDS').textContent = fmtVND(totalDS);
+  document.getElementById('kpiTotalLuotBan').textContent = fmtVND(totalLuotBan);
+  document.getElementById('kpiSKU').textContent = fmtInt(skuCount);
+  document.getElementById('kpiAvgDS').textContent = fmtVND(avgDS);
+
+  // Brand bar chart (aggregate from filtered data, by brand, top 10)
+  const brandAgg = {};
+  data.forEach(r=>{
+    brandAgg[r.brand] = (brandAgg[r.brand]||0) + r.ds;
+  });
+  const brandArr = Object.entries(brandAgg).sort((a,b)=>b[1]-a[1]).slice(0,10);
+
+  destroyChart('chartBrandBar');
+  const ctxBar = document.getElementById('chartBrandBar').getContext('2d');
+  chartInstances['chartBrandBar'] = new Chart(ctxBar, {
+    type: 'bar',
+    data: {
+      labels: brandArr.map(b=>b[0]),
+      datasets: [{
+        data: brandArr.map(b=>b[1]),
+        backgroundColor: brandArr.map(b=> b[0]==='Dh Foods' ? COLORS.tan : (state.brand.includes(b[0]) ? COLORS.green : COLORS.dark)),
+        borderRadius: 4,
+        maxBarThickness: 22
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{ callbacks:{ label: (ctx)=> ' Doanh số: ' + fmtVND(ctx.raw) } }
+      },
+      scales:{
+        x:{ ticks:{ callback:(v)=>fmtVND(v) }, grid:{color:'#eef1ee'} },
+        y:{ grid:{display:false}, ticks:{font:{size:10.5}} }
+      },
+      onClick:(evt, els)=>{
+        if (els.length){
+          const idx = els[0].index;
+          const val = brandArr[idx][0];
+          toggleInArray(state.brand, val);
+          renderAll();
+        }
+      }
+    }
+  });
+
+  // Donut: top5 brand + Khác (always computed on filtered-by-others, i.e. respecting price/category but showing brand distribution)
+  const dataForDonut = RAW.full_data.filter(r=>{
+    if (state.priceSeg.length && !state.priceSeg.includes(r.phan_khuc)) return false;
+    if (state.category.length && !state.category.includes(r.category)) return false;
+    return true;
+  });
+  const donutAgg = {};
+  dataForDonut.forEach(r=> donutAgg[r.brand] = (donutAgg[r.brand]||0) + r.ds);
+  const donutSorted = Object.entries(donutAgg).sort((a,b)=>b[1]-a[1]);
+  const top5 = donutSorted.slice(0,5);
+  const restSum = donutSorted.slice(5).reduce((s,x)=>s+x[1],0);
+  const donutLabels = top5.map(x=>x[0]).concat(restSum>0?['Khác']:[]);
+  const donutValues = top5.map(x=>x[1]).concat(restSum>0?[restSum]:[]);
+  const donutColors = [COLORS.dark, COLORS.green, COLORS.greenSoft, COLORS.greenPale, COLORS.tan, COLORS.grey];
+
+  destroyChart('chartBrandDonut');
+  const ctxDonut = document.getElementById('chartBrandDonut').getContext('2d');
+  chartInstances['chartBrandDonut'] = new Chart(ctxDonut, {
+    type:'doughnut',
+    data:{
+      labels: donutLabels,
+      datasets:[{ data: donutValues, backgroundColor: donutColors, borderWidth:2, borderColor:'#fff' }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      cutout:'62%',
+      plugins:{
+        legend:{ position:'bottom', labels:{boxWidth:9, font:{size:10.5}, padding:8} },
+        tooltip:{ callbacks:{ label:(ctx)=>{
+          const total = donutValues.reduce((s,v)=>s+v,0);
+          const pct = total? (ctx.raw/total*100).toFixed(1):0;
+          return ` ${ctx.label}: ${fmtVND(ctx.raw)} (${pct}%)`;
+        }}}
+      },
+      onClick:(evt, els)=>{
+        if (els.length){
+          const idx = els[0].index;
+          const val = donutLabels[idx];
+          if (val !== 'Khác'){
+            toggleInArray(state.brand, val);
+            renderAll();
+          }
+        }
+      }
+    }
+  });
+
+  // Category mini chart (horizontal bar)
+  const dataForCat = RAW.full_data.filter(r=>{
+    if (state.brand.length && !state.brand.includes(r.brand)) return false;
+    if (state.priceSeg.length && !state.priceSeg.includes(r.phan_khuc)) return false;
+    return true;
+  });
+  const catAgg = {};
+  dataForCat.forEach(r=> catAgg[r.category] = (catAgg[r.category]||0) + r.ds);
+  const catArr = Object.entries(catAgg).sort((a,b)=>b[1]-a[1]);
+
+  destroyChart('chartCategoryMini');
+  const ctxCatMini = document.getElementById('chartCategoryMini').getContext('2d');
+  chartInstances['chartCategoryMini'] = new Chart(ctxCatMini, {
+    type:'bar',
+    data:{
+      labels: catArr.map(c=>truncate(c[0],14)),
+      datasets:[{
+        data: catArr.map(c=>c[1]),
+        backgroundColor: catArr.map(c=> state.category.includes(c[0]) ? COLORS.green : catColor(c[0])),
+        borderRadius:4, maxBarThickness:20
+      }]
+    },
+    options:{
+      indexAxis:'y',
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:(ctx)=>' '+fmtVND(ctx.raw)}} },
+      scales:{ x:{ ticks:{callback:(v)=>fmtVND(v)}, grid:{color:'#eef1ee'} }, y:{grid:{display:false}, ticks:{font:{size:10}}} },
+      onClick:(evt, els)=>{
+        if (els.length){
+          const idx = els[0].index;
+          const val = catArr[idx][0];
+          toggleInArray(state.category, val);
+          renderAll();
+        }
+      }
+    }
+  });
+
+  // Insight box
+  const topBrand = brandArr[0];
+  const dhRow = brandArr.find(b=>b[0]==='Dh Foods');
+  const topCat = catArr[0];
+  const cheapSeg = RAW.price_seg.find(p=>p.phan_khuc.includes('Rẻ'));
+  document.getElementById('overviewInsight').innerHTML = `
+    <div class="ib-title">💡 Insight nhanh</div>
+    <ul>
+      <li><b>${topBrand ? topBrand[0] : '—'}</b> đang dẫn đầu thị phần với doanh số ${topBrand?fmtVND(topBrand[1]):'—'} trong nhóm đang lọc.</li>
+      <li>Phân khúc <b>${cheapSeg?cheapSeg.phan_khuc:'—'}</b> chiếm ${cheapSeg?fmtPct(cheapSeg.pct):''} tổng doanh số toàn thị trường — đây là sweet spot giá cho gia vị online.</li>
+      <li>Category dẫn đầu trong bộ lọc hiện tại: <b>${topCat?topCat[0]:'—'}</b> (${topCat?fmtVND(topCat[1]):''}).</li>
+      ${dhRow ? `<li><b>Dh Foods</b> đang đứng ở vị trí thị phần với doanh số ${fmtVND(dhRow[1])} — so sánh với top đầu để định vị chiến lược nhập hàng.</li>` : `<li><b>Dh Foods</b> không xuất hiện trong nhóm đang lọc — có thể đây là khoảng trống thị trường cần xem xét.</li>`}
+    </ul>
+  `;
+}
+
+// ============================================================
+// PAGE 2 — PRODUCT DEEP DIVE
+// ============================================================
+function renderProducts(){
+  let data = getFilteredData();
+  if (state.productSearch){
+    const q = state.productSearch.toLowerCase();
+    data = data.filter(r=> r.sp.toLowerCase().includes(q));
+  }
+
+  const count = data.length;
+  const avgPrice = count ? data.reduce((s,r)=>s+r.gia,0)/count : 0;
+  const avgReview = count ? data.reduce((s,r)=>s+r.ti_le_dg,0)/count : 0;
+
+  document.getElementById('kpiProdCount').textContent = fmtInt(count);
+  document.getElementById('kpiAvgPrice').textContent = fmtPrice(avgPrice);
+  document.getElementById('kpiAvgReview').textContent = fmtPct(avgReview*100, 1);
+
+  // Top 10 chart (from filtered data, by ds)
+  const top10 = [...data].sort((a,b)=>b.ds-a.ds).slice(0,10);
+  destroyChart('chartTop10');
+  const ctxTop10 = document.getElementById('chartTop10').getContext('2d');
+  chartInstances['chartTop10'] = new Chart(ctxTop10, {
+    type:'bar',
+    data:{
+      labels: top10.map(r=>truncate(r.sp, 30)),
+      datasets:[{
+        data: top10.map(r=>r.ds),
+        backgroundColor: top10.map(r=> r.brand==='Dh Foods' ? COLORS.tan : COLORS.dark),
+        borderRadius:4, maxBarThickness:20
+      }]
+    },
+    options:{
+      indexAxis:'y',
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{ callbacks:{
+          title: (items)=> top10[items[0].dataIndex].sp,
+          label: (ctx)=> [' Brand: '+top10[ctx.dataIndex].brand, ' Doanh số: '+fmtVND(ctx.raw)]
+        }}
+      },
+      scales:{
+        x:{ ticks:{callback:(v)=>fmtVND(v)}, grid:{color:'#eef1ee'} },
+        y:{ grid:{display:false}, ticks:{font:{size:9.5}} }
+      }
+    }
+  });
+
+  // Scatter: luot_ban vs ti_le_dg, sized by ds, colored by category
+  const catGroups = {};
+  data.forEach(r=>{
+    if (!catGroups[r.category]) catGroups[r.category] = [];
+    catGroups[r.category].push(r);
+  });
+  const maxDS = Math.max(...data.map(r=>r.ds), 1);
+  const datasets = Object.entries(catGroups).map(([cat, rows])=>({
+    label: cat,
+    data: rows.map(r=>({ x:r.luot_ban, y:r.ti_le_dg*100, r: 4 + (r.ds/maxDS)*18, _row:r })),
+    backgroundColor: catColor(cat) + 'b0',
+    borderColor: catColor(cat),
+    borderWidth:1
+  }));
+
+  destroyChart('chartScatterProd');
+  const ctxScatter = document.getElementById('chartScatterProd').getContext('2d');
+  chartInstances['chartScatterProd'] = new Chart(ctxScatter, {
+    type:'bubble',
+    data:{ datasets },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{ callbacks:{
+          title:(items)=> items[0].raw._row.sp,
+          label:(ctx)=> [' Lượt bán: '+fmtInt(ctx.raw.x), ' Tỉ lệ đánh giá: '+ctx.raw.y.toFixed(1)+'%', ' Doanh số: '+fmtVND(ctx.raw._row.ds)]
+        }}
+      },
+      scales:{
+        x:{ title:{display:true, text:'Lượt bán', font:{size:10}}, ticks:{callback:(v)=>fmtVND(v)}, grid:{color:'#eef1ee'} },
+        y:{ title:{display:true, text:'Tỉ lệ đánh giá (%)', font:{size:10}}, grid:{color:'#eef1ee'} }
+      }
+    }
+  });
+
+  // Custom legend for scatter
+  const legendEl = document.getElementById('scatterLegend');
+  legendEl.innerHTML = Object.keys(catGroups).map(cat=>
+    `<div class="legend-item"><span class="legend-dot" style="background:${catColor(cat)}"></span>${truncate(cat,22)}</div>`
+  ).join('');
+
+  // Table
+  renderProductTable(data);
+}
+
+function renderProductTable(data){
+  const { key, dir } = state.productSort;
+  const sorted = [...data].sort((a,b)=>{
+    let av = a[key], bv = b[key];
+    if (typeof av === 'string') return dir==='asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+    return dir==='asc' ? av-bv : bv-av;
+  });
+  const top = sorted.slice(0, 100); // cap render for perf
+
+  document.getElementById('tableCount').textContent = `${data.length} sản phẩm`;
+  const tbody = document.getElementById('productTableBody');
+  tbody.innerHTML = top.map(r=>{
+    const tagClass = r.phan_khuc.includes('Rẻ') ? 'tag-cheap' : r.phan_khuc.includes('Trung') ? 'tag-mid' : 'tag-high';
+    return `<tr>
+      <td title="${escapeHtml(r.sp)}">${truncate(r.sp, 48)}</td>
+      <td>${r.brand}${r.brand==='Dh Foods'?' ★':''}</td>
+      <td>${truncate(r.category,20)}</td>
+      <td class="num">${fmtPrice(r.gia)}</td>
+      <td class="num">${fmtVND(r.ds)}</td>
+      <td class="num">${fmtInt(r.luot_ban)}</td>
+      <td class="num">${fmtPct(r.ti_le_dg*100,1)}</td>
+      <td><span class="tag ${tagClass}">${r.phan_khuc}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Table sort handlers
+document.querySelectorAll('#productTable thead th').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const key = th.dataset.key;
+    if (state.productSort.key === key){
+      state.productSort.dir = state.productSort.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+      state.productSort.key = key;
+      state.productSort.dir = 'desc';
+    }
+    renderProductTable(getFilteredData().filter(r=> !state.productSearch || r.sp.toLowerCase().includes(state.productSearch.toLowerCase())));
+  });
+});
+
+document.getElementById('productSearch').addEventListener('input', (e)=>{
+  state.productSearch = e.target.value;
+  renderProducts();
+});
+
+// ============================================================
+// PAGE 3 — PRICE & CATEGORY
+// ============================================================
+function renderPrice(){
+  const data = getFilteredData();
+
+  // Price segment aggregation (respecting brand + category filters)
+  const segAgg = {};
+  data.forEach(r=> segAgg[r.phan_khuc] = (segAgg[r.phan_khuc]||0) + r.ds);
+  const segArr = Object.entries(segAgg).sort((a,b)=>b[1]-a[1]);
+  const totalSegDS = segArr.reduce((s,x)=>s+x[1],0);
+
+  // Category aggregation (respecting brand + price filters)
+  const catAgg = {};
+  data.forEach(r=> catAgg[r.category] = (catAgg[r.category]||0) + r.ds);
+  const catArr = Object.entries(catAgg).sort((a,b)=>b[1]-a[1]);
+  const totalCatDS = catArr.reduce((s,x)=>s+x[1],0);
+
+  // KPIs
+  if (segArr.length){
+    document.getElementById('kpiTopSegment').textContent = segArr[0][0];
+    document.getElementById('kpiTopSegmentPct').textContent = fmtPct(segArr[0][1]/totalSegDS*100) + ' tổng doanh số';
+  }
+  if (catArr.length){
+    document.getElementById('kpiTopCategory').textContent = truncate(catArr[0][0], 24);
+    document.getElementById('kpiTopCategoryPct').textContent = fmtPct(catArr[0][1]/totalCatDS*100) + ' tổng doanh số';
+  }
+  const avgPriceAll = data.length ? data.reduce((s,r)=>s+r.gia,0)/data.length : 0;
+  document.getElementById('kpiAvgPriceAll').textContent = fmtPrice(avgPriceAll);
+
+  // Chart: Price segment bar
+  destroyChart('chartPriceSeg');
+  const ctxPS = document.getElementById('chartPriceSeg').getContext('2d');
+  chartInstances['chartPriceSeg'] = new Chart(ctxPS, {
+    type:'bar',
+    data:{
+      labels: segArr.map(s=>s[0]),
+      datasets:[{
+        data: segArr.map(s=>s[1]),
+        backgroundColor: segArr.map(s=> state.priceSeg.includes(s[0]) ? COLORS.green : COLORS.dark),
+        borderRadius:6, maxBarThickness:60
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:(ctx)=>' '+fmtVND(ctx.raw)}} },
+      scales:{ y:{ ticks:{callback:(v)=>fmtVND(v)}, grid:{color:'#eef1ee'} }, x:{grid:{display:false}} },
+      onClick:(evt, els)=>{
+        if (els.length){
+          const val = segArr[els[0].index][0];
+          toggleInArray(state.priceSeg, val);
+          renderAll();
+        }
+      }
+    }
+  });
+
+  // Chart: Category pie
+  destroyChart('chartCategoryPie');
+  const ctxCatPie = document.getElementById('chartCategoryPie').getContext('2d');
+  chartInstances['chartCategoryPie'] = new Chart(ctxCatPie, {
+    type:'pie',
+    data:{
+      labels: catArr.map(c=>c[0]),
+      datasets:[{ data: catArr.map(c=>c[1]), backgroundColor: catArr.map(c=>catColor(c[0])), borderWidth:2, borderColor:'#fff' }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ position:'bottom', labels:{boxWidth:9, font:{size:10}, padding:7} },
+        tooltip:{ callbacks:{ label:(ctx)=>{
+          const pct = totalCatDS? (ctx.raw/totalCatDS*100).toFixed(1):0;
+          return ` ${ctx.label}: ${fmtVND(ctx.raw)} (${pct}%)`;
+        }}}
+      },
+      onClick:(evt, els)=>{
+        if (els.length){
+          const val = catArr[els[0].index][0];
+          toggleInArray(state.category, val);
+          renderAll();
+        }
+      }
+    }
+  });
+
+  // Chart: Category efficiency (DS TB / SKU)
+  const catEff = catArr.map(([cat, ds])=>{
+    const rows = data.filter(r=>r.category===cat);
+    return [cat, rows.length ? ds/rows.length : 0, rows.length];
+  }).sort((a,b)=>b[1]-a[1]);
+
+  destroyChart('chartCategoryEfficiency');
+  const ctxEff = document.getElementById('chartCategoryEfficiency').getContext('2d');
+  chartInstances['chartCategoryEfficiency'] = new Chart(ctxEff, {
+    type:'bar',
+    data:{
+      labels: catEff.map(c=>`${truncate(c[0],22)} (${c[2]} SP)`),
+      datasets:[{
+        data: catEff.map(c=>c[1]),
+        backgroundColor: catEff.map(c=>catColor(c[0])),
+        borderRadius:4, maxBarThickness:26
+      }]
+    },
+    options:{
+      indexAxis:'y',
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:(ctx)=>' DS TB/SKU: '+fmtVND(ctx.raw)}} },
+      scales:{ x:{ ticks:{callback:(v)=>fmtVND(v)}, grid:{color:'#eef1ee'} }, y:{grid:{display:false}, ticks:{font:{size:10.5}}} }
+    }
+  });
+
+  // Insight
+  const cheap = segArr.find(s=>s[0].includes('Rẻ'));
+  const best = catEff[0];
+  document.getElementById('priceInsight').innerHTML = `
+    <div class="ib-title">💡 Insight Phân Khúc & Category</div>
+    <ul>
+      <li>Phân khúc <b>${segArr[0]?segArr[0][0]:'—'}</b> đang chiếm doanh số lớn nhất trong bộ lọc hiện tại (${segArr[0]?fmtVND(segArr[0][1]):''}).</li>
+      <li>Category <b>${best?best[0]:'—'}</b> có doanh số trung bình/SKU cao nhất (${best?fmtVND(best[1]):''}) — ít SP nhưng hiệu suất tốt, đáng cân nhắc mở rộng SKU.</li>
+      <li>Tổng cộng có <b>${catArr.length}</b> category đang hoạt động trong nhóm dữ liệu đang lọc.</li>
+    </ul>
+  `;
+}
+
+// ============================================================
+// PAGE 4 — WHITE SPACE
+// ============================================================
+function renderWhitespace(){
+  // White space respects brand/price/category filters too
+  let wsData = RAW.full_data.filter(r=>{
+    if (!r.co_hoi) return false;
+    if (state.brand.length && !state.brand.includes(r.brand)) return false;
+    if (state.priceSeg.length && !state.priceSeg.includes(r.phan_khuc)) return false;
+    if (state.category.length && !state.category.includes(r.category)) return false;
+    return true;
+  });
+
+  const totalDS = wsData.reduce((s,r)=>s+r.ds,0);
+  document.getElementById('kpiWSCount').textContent = fmtInt(wsData.length);
+  document.getElementById('kpiWSTotalDS').textContent = fmtVND(totalDS);
+
+  const catCount = {};
+  wsData.forEach(r=> catCount[r.category] = (catCount[r.category]||0)+1);
+  const topCat = Object.entries(catCount).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('kpiWSTopCat').textContent = topCat ? truncate(topCat[0], 22) : '—';
+
+  // Scatter: ds vs ti_le_dg colored by category
+  const catGroups = {};
+  wsData.forEach(r=>{
+    if (!catGroups[r.category]) catGroups[r.category] = [];
+    catGroups[r.category].push(r);
+  });
+  const datasets = Object.entries(catGroups).map(([cat, rows])=>({
+    label: cat,
+    data: rows.map(r=>({ x:r.ds, y:r.ti_le_dg*100, r:7, _row:r })),
+    backgroundColor: catColor(cat) + 'c0',
+    borderColor: catColor(cat), borderWidth:1.5
+  }));
+
+  destroyChart('chartWSScatter');
+  const ctxWS = document.getElementById('chartWSScatter').getContext('2d');
+  chartInstances['chartWSScatter'] = new Chart(ctxWS, {
+    type:'bubble',
+    data:{ datasets },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{ callbacks:{
+          title:(items)=> items[0].raw._row.sp,
+          label:(ctx)=> [' Brand: '+ctx.raw._row.brand, ' Doanh số: '+fmtVND(ctx.raw.x), ' Tỉ lệ đánh giá: '+ctx.raw.y.toFixed(1)+'%']
+        }}
+      },
+      scales:{
+        x:{ title:{display:true,text:'Doanh số 365 ngày', font:{size:10}}, ticks:{callback:(v)=>fmtVND(v)}, grid:{color:'#eef1ee'} },
+        y:{ title:{display:true,text:'Tỉ lệ đánh giá (%)', font:{size:10}}, grid:{color:'#eef1ee'} }
+      }
+    }
+  });
+
+  const wsLegendEl = document.getElementById('wsLegend');
+  wsLegendEl.innerHTML = Object.keys(catGroups).map(cat=>
+    `<div class="legend-item"><span class="legend-dot" style="background:${catColor(cat)}"></span>${truncate(cat,22)} (${catGroups[cat].length})</div>`
+  ).join('');
+
+  // Category bar
+  const catArr = Object.entries(catCount).sort((a,b)=>b[1]-a[1]);
+  destroyChart('chartWSCategory');
+  const ctxWSCat = document.getElementById('chartWSCategory').getContext('2d');
+  chartInstances['chartWSCategory'] = new Chart(ctxWSCat, {
+    type:'bar',
+    data:{
+      labels: catArr.map(c=>truncate(c[0],20)),
+      datasets:[{ data: catArr.map(c=>c[1]), backgroundColor: catArr.map(c=>catColor(c[0])), borderRadius:4, maxBarThickness:26 }]
+    },
+    options:{
+      indexAxis:'y',
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:(ctx)=>' '+ctx.raw+' sản phẩm'}} },
+      scales:{ x:{ ticks:{stepSize:1}, grid:{color:'#eef1ee'} }, y:{grid:{display:false}, ticks:{font:{size:10.5}}} }
+    }
+  });
+
+  // Table
+  renderWSTable(wsData);
+
+  // Insight
+  const sortedByDS = [...wsData].sort((a,b)=>b.ds-a.ds);
+  const top3 = sortedByDS.slice(0,3);
+  document.getElementById('wsInsight').innerHTML = `
+    <div class="ib-title">💡 Đề xuất nhập hàng</div>
+    <ul>
+      <li>Có <b>${wsData.length} sản phẩm</b> đạt tiêu chí "white space": doanh số cao hơn trung vị nhưng tỉ lệ đánh giá thấp hơn trung vị — tức là nhu cầu cao nhưng độ uy tín/thương hiệu chưa được khẳng định rõ.</li>
+      <li>Category <b>${topCat?topCat[0]:'—'}</b> xuất hiện nhiều nhất trong nhóm cơ hội (${topCat?topCat[1]:0} sản phẩm) — ưu tiên xem xét trước.</li>
+      ${top3.length ? `<li>3 sản phẩm tiềm năng nhất theo doanh số: ${top3.map(r=>'<b>'+truncate(r.sp,40)+'</b>').join(', ')}.</li>` : ''}
+      <li>Đề xuất: Dh Foods có thể tham khảo các SKU này để định hướng sản phẩm mới — tập trung vào chất lượng/marketing để chiếm lĩnh nhóm khách hàng đang thiếu lựa chọn đáng tin cậy.</li>
+    </ul>
+  `;
+}
+
+function renderWSTable(data){
+  const { key, dir } = state.wsSort;
+  const sorted = [...data].sort((a,b)=>{
+    let av = a[key], bv = b[key];
+    if (typeof av === 'string') return dir==='asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+    return dir==='asc' ? av-bv : bv-av;
+  });
+  const tbody = document.getElementById('wsTableBody');
+  tbody.innerHTML = sorted.map(r=>`
+    <tr>
+      <td title="${escapeHtml(r.sp)}">${truncate(r.sp, 52)}</td>
+      <td>${r.brand}</td>
+      <td>${truncate(r.category,20)}</td>
+      <td class="num">${fmtPrice(r.gia)}</td>
+      <td class="num">${fmtVND(r.ds)}</td>
+      <td class="num"><span class="tag tag-opp">${fmtPct(r.ti_le_dg*100,1)}</span></td>
+    </tr>
+  `).join('');
+}
+
+document.querySelectorAll('#wsTable thead th').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const key = th.dataset.key;
+    if (state.wsSort.key === key){
+      state.wsSort.dir = state.wsSort.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+      state.wsSort.key = key;
+      state.wsSort.dir = 'desc';
+    }
+    renderWhitespace();
+  });
+});
+
+// ============================================================
+// ORCHESTRATION
+// ============================================================
+function getActivePage(){
+  const activeTab = document.querySelector('.tab.active');
+  return activeTab ? activeTab.dataset.page : 'overview';
+}
+
+function renderCurrentPage(pageId){
+  if (pageId === 'overview') renderOverview();
+  else if (pageId === 'products') renderProducts();
+  else if (pageId === 'price') renderPrice();
+  else if (pageId === 'whitespace') renderWhitespace();
+}
+
+function renderAll(){
+  renderSlicers();
+  renderCurrentPage(getActivePage());
+}
+
+// Initial render
+renderAll();
+
+</script>
+<script>
+// safe bootstrap for static hosting
+window.addEventListener('error', function(e){ console.error(e.error || e.message); });
+</script>
+</body>
+</html>
